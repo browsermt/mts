@@ -30,5 +30,4 @@ public:
 };
 }} // end of namespace marian::server
 
-#include "elg/json_request_handler.h"
 #include "bergamot/json_request_handler.h"

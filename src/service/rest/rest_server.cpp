@@ -135,20 +135,6 @@ public:
     : RequestHandler(gui_file, src_lang, trg_lang), process_(service){}
 };
 
-class ElgRequestHandler : public RequestHandler {
-  ElgJsonRequestHandlerV1<tservice_t> process_;
-  std::string
-  post(const crow::request& req) const override {
-    Ptr<rapidjson::Document> D = process_(req.body.c_str());
-    return rapidjson::serialize(*D);
-  }
-public:
-  ElgRequestHandler(tservice_t& service,
-                    const std::string gui_file,
-                    const std::string src_lang,
-                    const std::string trg_lang)
-    : RequestHandler(gui_file, src_lang, trg_lang), process_(service){}
-};
 }} // end of namespace marian::server
 
 int main(int argc, char* argv[])
@@ -187,7 +173,6 @@ int main(int argc, char* argv[])
   const std::string src = options->get<std::string>("source-language","");
   const std::string trg = options->get<std::string>("target-language","");
   BergamotRequestHandler bmot_handler(*service,"bergamot_api_v1.html", src, trg);
-  ElgRequestHandler elg_handler(*service,"elg_api_v1.html", src, trg);
 
   // For some odd reason (probably a bug in crow), a GET
   // on a path not ending in a parameter specification
@@ -203,13 +188,6 @@ int main(int argc, char* argv[])
   CROW_ROUTE(app, "/api/bergamot/demo.html")
     .methods("GET"_method)(bmot_handler);
 
-
-  CROW_ROUTE(app, "/api/elg/v1")
-    .methods("POST"_method)(elg_handler);
-  CROW_ROUTE(app, "/api/elg/v1/")
-    .methods("GET"_method)(elg_handler);
-  CROW_ROUTE(app, "/api/elg/demo.html")
-    .methods("GET"_method)(elg_handler);
 
 
   app.loglevel(crow::LogLevel::WARNING);
