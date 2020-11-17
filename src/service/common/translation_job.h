@@ -5,10 +5,12 @@
 #include "data/vocab.h"
 #include "translation_options.h"
 #include "translator/history.h"
-// #include "3rd_party/rapidjson/include/rapidjson/document.h"
-// #include "3rd_party/rapidjson/include/rapidjson/writer.h"
-// #include "3rd_party/rapidjson/include/rapidjson/stringbuffer.h"
-// #include "3rd_party/rapidjson/include/rapidjson/allocators.h"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsuggest-override"
+#include "sentencepiece/src/sentencepiece_processor.h"
+#include "sentencepiece.pb.h"
+#pragma GCC diagnostic push
 
 namespace marian {
 namespace server {
@@ -38,12 +40,12 @@ public:
   const std::vector<std::string> input;
   const size_t nbestlist_size{1};
   std::string translation;
+  std::vector<sentencepiece::SentencePieceText> tokenization; // for inputs and output
   NBestList nbest; // see translation/history.h for definition
   Ptr<const History> history;
 
   Ptr<Error> error;
   std::function<void (Ptr<Job>)> callback;
-  // rapidjson::Document request; // RapidJson Document representing the json request
 
   Job(uint64_t ejid, const std::string text,
       const TranslationOptions& topts, const size_t pri=0);

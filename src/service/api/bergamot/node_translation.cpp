@@ -8,6 +8,14 @@
 // go with camelCase for propertNames.
 // see here: https://github.com/json-api/json-api/issues/1255
 
+// Basic idea here: The NodeTranslation constructor identifies which bits in the 
+// JSON (sub) tree need to be translated, and submits them for translation, keeps
+// track of the futures. The finish() method than waits for everything to finish
+// and processes the search histories that it gets back via 
+// PlainTextTranslation::await().
+// See https://github.com/browsermt/mts/wiki/BergamotAPI for the Bergamot v1 API 
+// description.
+
 namespace marian {
 namespace server {
 

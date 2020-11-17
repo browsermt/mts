@@ -14,6 +14,10 @@ get_property(INCDIRS DIRECTORY marian/src PROPERTY INCLUDE_DIRECTORIES)
 get_directory_property(CTI DIRECTORY marian DEFINITION CUDA_TOOLKIT_INCLUDE)
 include_directories(${INCDIRS})
 include_directories(${CTI})
+
+get_property(INCDIRS DIRECTORY marian/src/3rd_party/sentencepiece/src PROPERTY INCLUDE_DIRECTORIES)
+include_directories(${INCDIRS})
+
 get_property(INCLUDE_DIRECTORIES DIRECTORY . PROPERTY INCLUDE_DIRECTORIES)
 set(INCLUDE_DIRECTORIES ${INCLUDE_DIRECTORIES} PARENT_SCOPE)
 
