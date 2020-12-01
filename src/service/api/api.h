@@ -4,16 +4,16 @@
 #include "crow.h"
 
 namespace marian {
-namespace server {
+  namespace server {
 
-template<class Search=BeamSearch>
-class JsonRequestHandler {
-  Ptr<TranslationService<Search>> service_;
-public:
-  JsonRequestHandler(Ptr<TranslationService<Search>> service)
-    : service_(service) { }
+    template<class Search=BeamSearch>
+      class JsonRequestHandler {
+        Ptr<TranslationService<Search>> service_;
+        public:
+        JsonRequestHandler(Ptr<TranslationService<Search>> service)
+          : service_(service) { }
 
-  virtual Ptr<crow::json:wvalue> operator()(std::string request) = 0;
-};
+        virtual Ptr<crow::json:wvalue> operator()(std::string request) = 0;
+      };
 
-}}
+  }}

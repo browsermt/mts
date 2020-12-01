@@ -14,29 +14,29 @@
 // Utility functions for dealing with Rapidjson
 namespace rapidjson {
   Value*
-  ensure_path(Value& node, MemoryPoolAllocator<>& alloc, char const* key);
+    ensure_path(Value& node, MemoryPoolAllocator<>& alloc, char const* key);
 
   template<typename ... Rest>
-  Value*
-  ensure_path(Value& node, MemoryPoolAllocator<>& alloc, char const* key,
-              Rest ... restpath){
-    if (!node.IsObject())
-      return NULL;
-    auto m = node.FindMember(key);
-    if (m != node.MemberEnd())
-      return ensure_path(m->value, alloc, restpath ...);
-    Value k(key,alloc);
-    auto& x = node.AddMember(k, Value().Move(), alloc)[key].SetObject();
-    return ensure_path(x, alloc, restpath ...);
-  }
+    Value*
+    ensure_path(Value& node, MemoryPoolAllocator<>& alloc, char const* key,
+        Rest ... restpath){
+      if (!node.IsObject())
+        return NULL;
+      auto m = node.FindMember(key);
+      if (m != node.MemberEnd())
+        return ensure_path(m->value, alloc, restpath ...);
+      Value k(key,alloc);
+      auto& x = node.AddMember(k, Value().Move(), alloc)[key].SetObject();
+      return ensure_path(x, alloc, restpath ...);
+    }
 
   std::string get(const Value& D, const char* key, std::string const& dflt);
   int get(const Value& D, const char* key, int const& dflt);
 
   Value job2json(const marian::server::Job& job,
-                 const marian::server::TranslationService& service,
-                 const marian::server::OutputOptions& opts,
-                 MemoryPoolAllocator<>& alloc);
+      const marian::server::TranslationService& service,
+      const marian::server::OutputOptions& opts,
+      MemoryPoolAllocator<>& alloc);
 
   std::string serialize(Document const& D);
 
