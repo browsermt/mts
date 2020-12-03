@@ -4,54 +4,41 @@
  * sentences.
  */
 
-#include "ssplit/ssplit.h"
+#pragma once
 
+#include "ssplit/ssplit.h"
+#include "common/options.h"
+#include "common/definitions.h"
+// #include "data/types.h"
+#include "common/types.h" // missing in shortlist.h
+#include "common/logging.h"
+#include "common/definitions.h"
+#include "common/utils.h"
+#include "data/shortlist.h"
+
+class SentenceSplitter;
+//class Tokenizer;
 
 class SentenceSplitter {
+  /* Using this class to hide away ssplit mechanics */
  private:
   ug::ssplit::SentenceSplitter ssplit_;
+  marian::Ptr<marian::Options> options_;
 
  public:
   typedef ug::ssplit::SentenceStream::splitmode ssplitmode;
 
-  SentenceSplitter() {}
+  // Constructor
+  SentenceSplitter(marian::Ptr<marian::Options> options);
 
-  void build_from_options(options) {
-    auto ssplit_prefix_file =
-        options_->get<std::string>("ssplit-prefix-file", "");
-    if (ssplit_prefix_file.size()) {
-      ssplit_prefix_file = cli::interpolateEnvVars(ssplit_prefix_file);
-      LOG(info, "Loading protected prefixes for sentence splitting from {}",
-          ssplit_prefix_file);
-      ssplit_.load(ssplit_prefix_file);
-    } else {
-      LOG(warn,
-          "Missing list of protected prefixes for sentence splitting. "
-          "Set with --ssplit-prefix-file.");
-    }
-  }
-
-  ug::ssplit::SentenceStream TranslationService::createSentenceStream(
+  ug::ssplit::SentenceStream createSentenceStream(
       std::string const& input,
-      ug::ssplit::SentenceStream::splitmode const& mode) {
-    return std::move(ug::ssplit::SentenceStream(input, this->ssplit_, mode));
-  }
-
+      ug::ssplit::SentenceStream::splitmode const& mode);
   ug::ssplit::SentenceStream::splitmode string2splitmode(
-      const std::string& m, bool throwOnError /*=false*/) {
-    typedef ug::ssplit::SentenceStream::splitmode splitmode;
-    // @TODO: throw Exception on error
-    if (m == "sentence" || m == "Sentence")
-      return splitmode::one_sentence_per_line;
-    if (m == "paragraph" || m == "Paragraph")
-      return splitmode::one_paragraph_per_line;
-    if (m != "wrapped_text" && m != "WrappedText" && m != "wrappedText") {
-      LOG(warn, "Ignoring unknown text input format specification: {}.", m);
-    }
-    return splitmode::wrapped_text;
-  }
+      const std::string& m, bool throwOnError /*=false*/);
 };
 
+/*
 class Tokenizer {
   std::vector<Ptr<Vocab const>> vocabs_;
   std::vector<Ptr<const Vocab>> loadVocabularies(Ptr<Options> options) {
@@ -71,8 +58,13 @@ class Tokenizer {
     }
     return vocabs;
   }
+
+  Tokenizer(Ptr<Options> options){
+    vocabs_ = loadVocabularies(options);
+  }
 };
 
 class TextProcessor {
   TextProcessor(Tokenizer, SentenceSplitter);
 };
+*/

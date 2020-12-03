@@ -30,6 +30,21 @@ if (CUDA_FOUND)
   set(MARIAN_CUDA_LIB marian_cuda)
 endif(CUDA_FOUND)
 
+# BERGAMOT_API
+if (COMPILE_BERGAMOT_API)
+  add_executable(main bintr/test_temporary.cpp)
+  add_library(libbergamot STATIC bintr/textops.cpp)
+  set_target_properties(
+    main PROPERTIES OUTPUT marian-rest-server
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+   )
+
+  target_compile_options(main PUBLIC ${ALL_WARNINGS})
+  set(EXECUTABLES ${EXECUTABLES} main)
+  target_link_libraries(main libbergamot marian ${MARIAN_CUDA_LIB} ${EXT_LIBS} ssplit pcrecpp.a pcre.a)
+endif(COMPILE_BERGAMOT_API)
+
+
 # REST SERVER
 if (COMPILE_REST_SERVER)
   add_executable(rest-server rest/rest_server.cpp)

@@ -16,9 +16,10 @@
 #include "data/text_input.h"
 
 #include "translator/history.h"
+#include "translator/scorers.h"
+
 // #include "translator/output_collector.h"
 // #include "translator/output_printer.h"
-#include "translator/scorers.h"
 // #include "models/model_task.h"
 
 // TODO(jerin): Mark following out, queueing mechanism not in Batching layer.
