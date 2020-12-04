@@ -77,16 +77,13 @@ namespace marian
         return vocabs;
       }
 
-      SentenceTuple tokenize(std::vector<std::string> const &snt)
+      SentenceTuple tokenize(std::string const &snt)
       {
         SentenceTuple sentence_tuple(1); // job ID should be unique
-        for (size_t i = 0; i < snt.size(); ++i)
-        {
-          Words words = vocabs_[i]->encode(snt[i], addEos_, inference_);
-          if (words.empty())
-            words.push_back(Word::DEFAULT_EOS_ID);
-          sentence_tuple.push_back(words);
-        }
+        Words words = vocabs_[0]->encode(snt, addEos_, inference_);
+        if (words.empty())
+          words.push_back(Word::DEFAULT_EOS_ID);
+        sentence_tuple.push_back(words);
         return sentence_tuple;
       }
 

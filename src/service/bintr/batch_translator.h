@@ -52,7 +52,7 @@ namespace marian
                       Ptr<Options> options);
 
       template <class BatchType, class Search>
-      void translate_batch(BatchType batch)
+      Histories translate_batch(BatchType batch)
       {
         /* @brief
       Run a translation on a batch and issues a callback on each of the history.
@@ -91,10 +91,8 @@ namespace marian
 
         // The below repeated for a batch?
         auto histories = search->search(graph_, batch);
-        for (auto history : histories)
-        {
-          // callback_(history);
-        }
+        return histories;
+
       }
       marian::Ptr<data::CorpusBatch> construct_batch(const std::vector<data::SentenceTuple> &);
     };

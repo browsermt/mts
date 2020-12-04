@@ -59,28 +59,42 @@ int main(int argc, char *argv[])
   std::cout << input << "\n";
   auto buf = sentence_splitter.createSentenceStream(input, smode);
 
-  std::vector<std::string> paragraph;
   std::string snt;
+  std::vector<marian::data::SentenceTuple> sentence_tuples;
+  // sentence_tuples.emplace_back(sentence_tuple);
+
   while (buf >> snt)
   {
     LOG(trace, "SNT: {}", snt);
-    paragraph.push_back(snt);
+    auto sentence_tuple = tokenizer.tokenize(snt);
+    sentence_tuples.push_back(sentence_tuple);
   }
 
-  auto sentence_tuple = tokenizer.tokenize(paragraph);
-  for (auto words : sentence_tuple)
+  for (auto sentence_tuple : sentence_tuples)
   {
+    for (auto words : sentence_tuple)
+    {
+      for (auto word : words)
+      {
+        std::cout << word.toString() << " ";
+      }
+      std::cout << "\n";
+    }
+  }
+
+  marian::bergamot::BatchTranslator batch_translator(marian::CPU0, tokenizer.vocabs_, options);
+  auto batch = batch_translator.construct_batch(sentence_tuples);
+  auto histories = batch_translator.translate_batch<marian::Ptr<marian::data::CorpusBatch>, marian::BeamSearch>(batch);
+  for (auto history : histories)
+  {
+    marian::NBestList onebest = history->nBest(1);
+    marian::Result result = onebest[0]; // Expecting only one result;
+    auto words = std::get<0>(result);
     for (auto word : words)
     {
       std::cout << word.toString() << " ";
     }
     std::cout << "\n";
   }
-
-  marian::bergamot::BatchTranslator batch_translator(marian::CPU0, tokenizer.vocabs_, options);
-  std::vector<marian::data::SentenceTuple> sentence_tuples;
-  sentence_tuples.emplace_back(sentence_tuple);
-  auto batch = batch_translator.construct_batch(sentence_tuples);
-  batch_translator.translate_batch<marian::Ptr<marian::data::CorpusBatch>, marian::BeamSearch>(batch);
   return 0;
 }
