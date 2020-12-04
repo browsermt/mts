@@ -62,8 +62,8 @@ namespace marian
 
         // The below is one-off, correct?
         graph_ = New<ExpressionGraph>(true); // always optimize
-        auto prec = options_->get<std::vector<std::string>>("precision", {"float31"});
-        graph_->setDefaultElementType(typeFromString(prec[-1]));
+        auto prec = options_->get<std::vector<std::string>>("precision", {"float32"});
+        graph_->setDefaultElementType(typeFromString(prec[0]));
         graph_->setDevice(device_);
         graph_->getBackend()->configureDevice(options_);
         graph_->reserveWorkspaceMB(options_->get<size_t>("workspace"));

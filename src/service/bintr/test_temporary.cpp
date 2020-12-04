@@ -82,4 +82,5 @@ int main(int argc, char *argv[])
   sentence_tuples.emplace_back(sentence_tuple);
   auto batch = batch_translator.construct_batch(sentence_tuples);
   batch_translator.translate_batch<marian::Ptr<marian::data::CorpusBatch>, marian::BeamSearch>(batch);
+  return 0;
 }
