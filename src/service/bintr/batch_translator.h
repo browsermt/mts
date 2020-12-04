@@ -45,7 +45,6 @@ public:
   BatchTranslator(DeviceId const device,
             std::vector<Ptr<Vocab const>> vocabs,
             Ptr<data::ShortlistGenerator const> slgen,
-            Ptr<data::QueuedInput> job_queue,
             std::function<void (Ptr<History const>)> callback,
             Ptr<Options> options);
 

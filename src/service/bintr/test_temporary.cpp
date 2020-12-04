@@ -8,28 +8,6 @@
 #include <iostream>
 #include "textops.h"
 
-/* Looks unnecessary
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsuggest-override"
-#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
-#include "crow.h"
-#pragma GCC diagnostic pop
-*/
-
-/*
- : smode_(smode) {
-        size_t linectr = 0;
-        std::string snt;
-        auto buf = service.createSentenceStream(input, smode);
-        while (buf >> snt) {
-          LOG(trace, "SNT: {}", snt);
-          auto foo = std::move(servkkice.push(++linectr, snt, &topts));
-          pending_jobs_.push_back(std::move(foo.second));
-        }
-        finished_jobs_.resize(pending_jobs_.size());
-        ends_with_eol_char_ = input.size() && input.back() == '\n';
-      }
-*/
 
 int main(int argc, char* argv[]) {
   marian::ConfigParser cp(marian::cli::mode::translation);
@@ -60,19 +38,32 @@ int main(int argc, char* argv[]) {
   auto options = cp.parseOptions(argc, argv, true);
 
 
+  // Create SentenceSplitter
   const char* _smode_char = "paragraph";
   string smode_char(_smode_char);
+  auto sentence_splitter = marian::bergamot::SentenceSplitter(options);
+  auto smode = sentence_splitter.string2splitmode(smode_char, false);
 
+  marian::bergamot::Tokenizer tokenizer(options);
+
+  // Scan a paragraph, queue it.
   std::string input;
   std::getline(std::cin, input); 
   std::cout<<input<<"\n";
-
-  auto sentence_splitter = SentenceSplitter(options);
-  auto smode = sentence_splitter.string2splitmode(smode_char, false);
   auto buf = sentence_splitter.createSentenceStream(input, smode);
 
+  std::vector<std::string> paragraph;
   std::string snt;
   while (buf >> snt) {
     LOG(trace, "SNT: {}", snt);
+    paragraph.push_back(snt);
+  }
+
+  auto sentence_tuple = tokenizer.tokenize(paragraph);
+  for(auto words: sentence_tuple){
+    for(auto word: words){
+      std::cout << word.toString() << " ";
+    }
+    std::cout<<"\n";
   }
 }
