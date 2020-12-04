@@ -33,7 +33,7 @@ endif(CUDA_FOUND)
 # BERGAMOT_API
 if (COMPILE_BERGAMOT_API)
   add_executable(main bintr/test_temporary.cpp)
-  add_library(libbergamot STATIC bintr/textops.cpp)
+  add_library(libbergamot STATIC bintr/textops.cpp bintr/batch_translator.cpp)
   set_target_properties(
     main PROPERTIES OUTPUT marian-rest-server
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"

@@ -47,12 +47,10 @@ namespace marian
 
     class Tokenizer
     {
-    private:
+    public:
       std::vector<Ptr<Vocab const>> vocabs_;
       bool inference_;
       bool addEos_;
-
-    public:
       Tokenizer(Ptr<Options> options): inference_(true), addEos_(true)
       {
         vocabs_ = loadVocabularies(options);

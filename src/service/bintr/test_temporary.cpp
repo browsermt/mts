@@ -1,15 +1,23 @@
 #include "common/timer.h"
 #include "common/utils.h"
+#include "common/definitions.h"
 #include "marian.h"
+#include "translator/history.h"
 #include "translator/beam_search.h"
 #include "translator/output_printer.h"
 #include <cstdlib>
 #include <sstream>
 #include <iostream>
 #include "textops.h"
+#include "batch_translator.h"
 
+void callback_f(marian::Histories h)
+{
+  return;
+}
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[])
+{
   marian::ConfigParser cp(marian::cli::mode::translation);
 
   cp.addOption<int>("--port,-p", "Server Options", "server port", 18080);
@@ -37,9 +45,8 @@ int main(int argc, char* argv[]) {
 
   auto options = cp.parseOptions(argc, argv, true);
 
-
   // Create SentenceSplitter
-  const char* _smode_char = "paragraph";
+  const char *_smode_char = "paragraph";
   string smode_char(_smode_char);
   auto sentence_splitter = marian::bergamot::SentenceSplitter(options);
   auto smode = sentence_splitter.string2splitmode(smode_char, false);
@@ -48,22 +55,31 @@ int main(int argc, char* argv[]) {
 
   // Scan a paragraph, queue it.
   std::string input;
-  std::getline(std::cin, input); 
-  std::cout<<input<<"\n";
+  std::getline(std::cin, input);
+  std::cout << input << "\n";
   auto buf = sentence_splitter.createSentenceStream(input, smode);
 
   std::vector<std::string> paragraph;
   std::string snt;
-  while (buf >> snt) {
+  while (buf >> snt)
+  {
     LOG(trace, "SNT: {}", snt);
     paragraph.push_back(snt);
   }
 
   auto sentence_tuple = tokenizer.tokenize(paragraph);
-  for(auto words: sentence_tuple){
-    for(auto word: words){
+  for (auto words : sentence_tuple)
+  {
+    for (auto word : words)
+    {
       std::cout << word.toString() << " ";
     }
-    std::cout<<"\n";
+    std::cout << "\n";
   }
+
+  marian::bergamot::BatchTranslator batch_translator(marian::CPU0, tokenizer.vocabs_, options);
+  std::vector<marian::data::SentenceTuple> sentence_tuples;
+  sentence_tuples.emplace_back(sentence_tuple);
+  auto batch = batch_translator.construct_batch(sentence_tuples);
+  batch_translator.translate_batch<marian::Ptr<marian::data::CorpusBatch>, marian::BeamSearch>(batch);
 }
