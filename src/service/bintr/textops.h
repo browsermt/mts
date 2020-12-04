@@ -16,8 +16,6 @@
 #include "common/utils.h"
 #include "data/shortlist.h"
 
-typedef marian::data::SentenceTuple SentenceTuple;
-
 namespace marian
 {
   namespace bergamot
@@ -51,48 +49,37 @@ namespace marian
       std::vector<Ptr<Vocab const>> vocabs_;
       bool inference_;
       bool addEos_;
-      Tokenizer(Ptr<Options> options): inference_(true), addEos_(true)
-      {
-        vocabs_ = loadVocabularies(options);
-      }
-
-      std::vector<Ptr<const Vocab>> loadVocabularies(Ptr<Options> options)
-      {
-        // @TODO: parallelize vocab loading for faster startup
-        auto vfiles = options->get<std::vector<std::string>>("vocabs");
-        // with the current setup, we need at least two vocabs: src and trg
-        ABORT_IF(vfiles.size() < 2, "Insufficient number of vocabularies.");
-        std::vector<Ptr<Vocab const>> vocabs(vfiles.size());
-        std::unordered_map<std::string, Ptr<Vocab>> vmap;
-        for (size_t i = 0; i < vocabs.size(); ++i)
-        {
-          auto m = vmap.emplace(std::make_pair(vfiles[i], Ptr<Vocab>()));
-          if (m.second)
-          { // new: load the vocab
-            m.first->second = New<Vocab>(options, i);
-            m.first->second->load(vfiles[i]);
-          }
-          vocabs[i] = m.first->second;
-        }
-        return vocabs;
-      }
-
-      SentenceTuple tokenize(std::string const &snt)
-      {
-        SentenceTuple sentence_tuple(1); // job ID should be unique
-        Words words = vocabs_[0]->encode(snt, addEos_, inference_);
-        if (words.empty())
-          words.push_back(Word::DEFAULT_EOS_ID);
-        sentence_tuple.push_back(words);
-        return sentence_tuple;
-      }
-
+      Tokenizer(Ptr<Options>);
+      std::vector<Ptr<const Vocab>> loadVocabularies(Ptr<Options> options);
+      data::SentenceTuple tokenize(std::string const &snt);
     };
+
+    class TextProcessor
+    {
+    public:
+      Tokenizer tokenizer;
+      SentenceSplitter sentence_splitter;
+      TextProcessor(Ptr<Options>);
+
+      std::vector<data::SentenceTuple> first_pass(std::string query)
+      {
+        const char *_smode_char = "paragraph";
+        string smode_char(_smode_char);
+        auto smode = sentence_splitter.string2splitmode(smode_char, false);
+        auto buf = sentence_splitter.createSentenceStream(query, smode);
+        std::string snt;
+        std::vector<data::SentenceTuple> sentence_tuples;
+        // sentence_tuples.emplace_back(sentence_tuple);
+
+        while (buf >> snt)
+        {
+          LOG(trace, "SNT: {}", snt);
+          auto sentence_tuple = tokenizer.tokenize(snt);
+          sentence_tuples.push_back(sentence_tuple);
+        }
+        return sentence_tuples;
+      }
+    };
+
   } // namespace bergamot
 } // namespace marian
-
-/*
-class TextProcessor {
-  TextProcessor(Tokenizer, SentenceSplitter);
-};
-*/

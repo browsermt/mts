@@ -45,31 +45,14 @@ int main(int argc, char *argv[])
 
   auto options = cp.parseOptions(argc, argv, true);
 
-  // Create SentenceSplitter
-  const char *_smode_char = "paragraph";
-  string smode_char(_smode_char);
-  auto sentence_splitter = marian::bergamot::SentenceSplitter(options);
-  auto smode = sentence_splitter.string2splitmode(smode_char, false);
-
-  marian::bergamot::Tokenizer tokenizer(options);
+  marian::bergamot::TextProcessor text_proc(options);
 
   // Scan a paragraph, queue it.
   std::string input;
   std::getline(std::cin, input);
   std::cout << input << "\n";
-  auto buf = sentence_splitter.createSentenceStream(input, smode);
 
-  std::string snt;
-  std::vector<marian::data::SentenceTuple> sentence_tuples;
-  // sentence_tuples.emplace_back(sentence_tuple);
-
-  while (buf >> snt)
-  {
-    LOG(trace, "SNT: {}", snt);
-    auto sentence_tuple = tokenizer.tokenize(snt);
-    sentence_tuples.push_back(sentence_tuple);
-  }
-
+  auto sentence_tuples = text_proc.first_pass(input);
   for (auto sentence_tuple : sentence_tuples)
   {
     for (auto words : sentence_tuple)
@@ -82,7 +65,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  marian::bergamot::BatchTranslator batch_translator(marian::CPU0, tokenizer.vocabs_, options);
+  marian::bergamot::BatchTranslator batch_translator(marian::CPU0, text_proc.tokenizer.vocabs_, options);
   auto batch = batch_translator.construct_batch(sentence_tuples);
   auto histories = batch_translator.translate_batch<marian::Ptr<marian::data::CorpusBatch>, marian::BeamSearch>(batch);
   for (auto history : histories)
