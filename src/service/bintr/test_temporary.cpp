@@ -40,6 +40,9 @@ int main(int argc, char *argv[])
   cp.addOption<std::string>("--target-language", "Server Options",
                             "target language of translation service");
 
+  cp.addOption<int>("--max-input-sentence-tokens", "Bergamot Options", 
+                           "Maximum input tokens to be processed in a single sentence.", 128);
+
   // TODO(jerin): Add QE later.
   // marian::qe::QualityEstimator::addOptions(cp);
 
@@ -65,7 +68,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  marian::bergamot::BatchTranslator batch_translator(marian::CPU0, text_proc.tokenizer.vocabs_, options);
+  marian::bergamot::BatchTranslator batch_translator(marian::CPU0, text_proc.tokenizer_.vocabs_, options);
   auto batch = batch_translator.construct_batch(sentence_tuples);
   auto histories = batch_translator.translate_batch<marian::Ptr<marian::data::CorpusBatch>, marian::BeamSearch>(batch);
   for (auto history : histories)
