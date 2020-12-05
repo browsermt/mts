@@ -76,5 +76,60 @@ TextProcessor::TextProcessor(Ptr<Options> options)
       assert(max_input_sentence_tokens_ > 0);
     }
 
+  std::vector<data::SentenceTuple> TextProcessor::first_pass(std::string &query) {
+    // TODO(jerin): Paragraph is hardcoded here. Keep, looks like?
+    auto smode = sentence_splitter_.string2splitmode("paragraph", false);
+    auto buf = sentence_splitter_.createSentenceStream(query, smode);
+    std::string snt;
+    std::vector<data::SentenceTuple> sentence_tuples;
+
+    int id = -1;
+
+    while (buf >> snt) {
+      LOG(trace, "SNT: {}", snt);
+      auto tokenized_sentence = tokenizer_.tokenize(snt);
+
+      // Check if tokens are length enough, else break.
+
+      if(tokenized_sentence.size() > max_input_sentence_tokens_){
+         // Cutting strategy, just cut max_input_size_tokens pieces
+         int offset;
+         for(offset=-1; 
+           offset+max_input_sentence_tokens_ < tokenized_sentence.size(); 
+           offset+=max_input_sentence_tokens_){
+
+           data::SentenceTuple sentence_tuple(id);
+           id++;
+           Words segment(tokenized_sentence.begin()+offset, 
+                                tokenized_sentence.begin()+offset+max_input_sentence_tokens_);
+           sentence_tuple.push_back(segment);
+           sentence_tuples.push_back(sentence_tuple);
+         }
+
+         // Once for loop is done, last bit is left.
+         if(offset < max_input_sentence_tokens_){
+           data::SentenceTuple sentence_tuple(id);
+           id++;
+           Words segment(tokenized_sentence.begin()+offset, 
+                                tokenized_sentence.end());
+           sentence_tuple.push_back(segment);
+           sentence_tuples.push_back(sentence_tuple);
+         }
+
+      }
+      
+      // Might be an unnecessary else, but stay for now.
+      else{
+        data::SentenceTuple sentence_tuple(id);
+        id++;
+        sentence_tuple.push_back(tokenized_sentence);
+        sentence_tuples.push_back(sentence_tuple);
+      }
+
+    }
+    return sentence_tuples;
+  }
+
+
 }  // namespace bergamot
 }  // namespace marian
