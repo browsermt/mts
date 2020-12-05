@@ -69,7 +69,6 @@ namespace marian
         auto buf = sentence_splitter.createSentenceStream(query, smode);
         std::string snt;
         std::vector<data::SentenceTuple> sentence_tuples;
-        // sentence_tuples.emplace_back(sentence_tuple);
 
         while (buf >> snt)
         {
