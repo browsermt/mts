@@ -59,7 +59,7 @@ ready() const { // ready to accept more items?
 template<typename item_t>
 typename Queue<item_t>::STATUS_CODE
 Queue<item_t>::
-push(item_t item, timeout_t timeout, Logger* logger) {
+push(item_t&& item, timeout_t timeout, Logger* logger) {
   std::unique_lock<std::mutex> lock(mutex_);
 
   // If the queue has limited capacity and is full, wait for for a free slot

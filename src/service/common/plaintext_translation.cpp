@@ -1,19 +1,35 @@
 #include "plaintext_translation.h"
 #include "translation_service.h"
+#include "service_typedefs.h"
+
 namespace marian {
 namespace server {
 
 PlainTextTranslation::
-PlainTextTranslation(std::string const& input,
+PlainTextTranslation(const std::string const&& input,
                      TranslationService& service,
                      const TranslationOptions& topts,
-                     splitmode const& smode)
-  : smode_(smode) {
+                     splitmode const& smode,
+                     uint64_t externalID/*=0*/)
+  : originalInputString_(input)
+  , smode_(smode)
+  , externalId_(externalId) {
   size_t linectr=0;
-  std::string snt;
-  auto buf = service.createSentenceStream(input, smode);
+  StringView text = originalInputString_;
+  StringView snt;
+  auto buf = service.createSentenceStream(text, smode);
   while (buf >> snt) {
     LOG(trace, "SNT: {}", snt);
+    if (snt.size()) {
+      auto j = Job::create(linectr++);
+      uint32_t beginSpan = snt.data() - originalInputString_;
+      uint32_t endSpan = beginSpan + snt.size();
+      j->originalSpan = std:make_pair<uint32_t, uint32_t>(beginSpan, endSpan);
+      // @TODO: perform any potential preprocessing here, such as prepending
+      // language tags for multilingual translation, or HelsinkiNLP OPUS-style
+      // text normalization (based on some normalization in Moses ...)
+      j->input.push_back(tokenize(snt, *service.vocab(0)));
+
     auto foo = std::move(service.push(++linectr, snt, &topts));
     pending_jobs_.push_back(std::move(foo.second));
   }

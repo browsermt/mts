@@ -30,13 +30,23 @@ int timeval_subtract_ (struct timeval& result,
   return x.tv_sec < y.tv_sec;
 }
 
-Job::Job(uint64_t ejid, const std::string text,
-         const TranslationOptions& topts, const size_t pri)
-  : unique_id(++job_ctr_),
-    external_id(ejid),
-    priority(pri),
-    input({text}),
-    nbestlist_size(topts.nbest) {
+TranslationHypothesis::TranslationHypothesis(const Hypothesis::PtrType& h, const Vocab& V)
+  : hypothesis_(h) {
+  Ptr<SentencePieceVocab> spv = V.TryAs<SentencePieceVocab>();
+  if (spv) { // currently, we support only SentencePiece Vocabularies
+    V->Decode(hypothesis_->tracebackWords,&text);
+  } else {
+    // @TODO: support other vocabs.
+    ABORT("Currently only SentencePiece vocabularies are supported.");
+  }
+}
+
+IPtr<const Hypothesis> TranslationHypothesis::getHypothesis() const {
+  return hypothesis_;
+}
+
+Job::Job(uint64_t ejid)
+  : unique_id(++job_ctr_), external_id(ejid) {
   gettimeofday(&created.first, &created.second);
 }
 

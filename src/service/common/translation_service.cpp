@@ -76,6 +76,8 @@ void TranslationService::callback_(Ptr<const History> h) {
   entry.second.set_value(entry.first);
 }
 
+
+
 // When run in a docker container with nvidia docker, CUDA may or may
 // not be available, depending on how the Docker container is run, i.e.,
 // mapping host devices into the container via --gpus or not.
@@ -108,14 +110,36 @@ void TranslationService::stop() {
   for (auto& w: workers_) w->join();
 }
 
-
-std::pair<uint64_t, std::future<Ptr<const Job>>>
+std::shared_ptr<const Job>
 TranslationService::
 push(uint64_t ejid,
-     const std::string& input,
+     const StringView& input,
      const TranslationOptions* topts/*=NULL*/,
+     uint32_t offset/*=0*/, // start position in original string
      size_t const priority/*=0*/, // priority handling currently not implemented
-     std::function<void (Ptr<Job> j)> callback /* =[=](Ptr<Job> j){return;} */) {
+     std::function<void (Job& j)> callback /* =[=](Job& j){return;} */) {
+
+  // Set up the job
+  auto job = New<Job>(ejid);
+  if(!topt) topts = &dflt_topts;
+  job->nbestlist_size = topts->nbest;
+
+  job->originalSpan
+    = std::make_pair<uint32_t,uint32_t>(offset, offset+input.size());
+  job->priority = priority;
+
+  if (input.size() == 0) { // nothing to do, call callback immediately
+    callback(*job);
+  }
+
+  // Tokenize input;
+  auto vcb = vocab(0)->tryAs<SentencePieceVocab>;
+  // @TODO: handle this more gracefully
+  ABORT_IF(!vcb, "Only SentencePiece vocabularies are currently supported.");
+  job->input.resize(1);
+  vcb->encode(input, &job->input[0]);
+
+
   auto job = New<Job>(ejid, input, topts ? *topts : dflt_topts_, priority);
   if (input.empty()){ // return empty result immediately
     std::promise<Ptr<Job const>> prom;
@@ -178,6 +202,15 @@ string2splitmode(const std::string& m, bool throwOnError/*=false*/){
     LOG(warn,"Ignoring unknown text input format specification: {}.", m);
   }
   return splitmode::wrapped_text;
+}
+
+SentencePieceText tokenize(StringView text, const Vocab& V) {
+  SentencePieceText tokenized;
+  auto vcb = V.tryAs<SentencePieceVocab>();
+  ABORT_IF(!vcb, "Currently only implemented for SentencePiece vocabularies.");
+  // @TODO: support other vocabularies
+  vcb->Encode(text, &tokenized);
+  return tokenized;
 }
 
 }} // end of namespace marian::server

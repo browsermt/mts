@@ -32,7 +32,9 @@ extern Logger logger;
 namespace marian {
 namespace server {
 
-// template<class Search=BeamSearch> class NodeTranslation;
+typedef sentencepiece::SentencePieceText TokenizedSentence;
+typedef sentencepiece::min_string_view StringView;
+
 class PlainTextTranslation;
 std::vector<Ptr<const Vocab> > loadVocabularies(Ptr<Options> options);
 
@@ -84,13 +86,18 @@ public:
     }
   }
 
-  std::pair<uint64_t, std::future<Ptr<const Job>>>
+  std::shared_ptr<const Job>
   push(uint64_t ejid,
-       const std::string& input,
+       const StringView& input,
        const TranslationOptions* topts=NULL,
+       uint32_t offset=0, // start position in original string
        const size_t priority=0, // currently has no effect, yet to be implemented
-       std::function<void (Ptr<Job> j)> callback =[=](Ptr<Job> j){return;});
+       std::function<void (Job& j)> callback =[=](Job& j){return;});
 
+
+  // remove Ptr<Job> from the internal cache
+  std::shared_ptr<Job>
+  detach(uint64_t ijid); // ijid = internal job id
 
   void stop();
   bool isRight2LeftDecoder() const;
@@ -111,5 +118,6 @@ public:
 ug::ssplit::SentenceStream::splitmode
 string2splitmode(const std::string& m, bool throwOnError=false);
 
+SentencePieceText tokenize(StringView text, const Vocab& V);
 
 }} // end of namespace marian::server
