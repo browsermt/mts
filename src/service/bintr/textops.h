@@ -56,7 +56,7 @@ class TextProcessor {
   SentenceSplitter sentence_splitter_;
   TextProcessor(Ptr<Options>);
 
-  std::vector<data::SentenceTuple> first_pass(std::string &query);
+  std::vector<Words> query_to_segments(std::string &query);
 };
 
 }  // namespace bergamot

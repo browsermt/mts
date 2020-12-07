@@ -70,66 +70,53 @@ Words Tokenizer::tokenize(std::string const &snt) {
 
 TextProcessor::TextProcessor(Ptr<Options> options)
     : tokenizer_(options), sentence_splitter_(options) {
-      max_input_sentence_tokens_ = options->get<int>("max-input-sentence-tokens");
+  max_input_sentence_tokens_ = options->get<int>("max-input-sentence-tokens");
 
-      // Dirty assert, should do at configparse
-      assert(max_input_sentence_tokens_ > 0);
-    }
+  // Dirty assert, should do at configparse
+  assert(max_input_sentence_tokens_ > 0);
+}
 
-  std::vector<data::SentenceTuple> TextProcessor::first_pass(std::string &query) {
-    // TODO(jerin): Paragraph is hardcoded here. Keep, looks like?
-    auto smode = sentence_splitter_.string2splitmode("paragraph", false);
-    auto buf = sentence_splitter_.createSentenceStream(query, smode);
-    std::string snt;
-    std::vector<data::SentenceTuple> sentence_tuples;
+std::vector<Words> TextProcessor::query_to_segments(std::string &query) {
+  // TODO(jerin): Paragraph is hardcoded here. Keep, looks like?
+  auto smode = sentence_splitter_.string2splitmode("paragraph", false);
+  auto buf = sentence_splitter_.createSentenceStream(query, smode);
+  std::string snt;
+  std::vector<Words> segments;
 
-    int id = -1;
+  while (buf >> snt) {
+    LOG(trace, "SNT: {}", snt);
+    Words tokenized_sentence = tokenizer_.tokenize(snt);
 
-    while (buf >> snt) {
-      LOG(trace, "SNT: {}", snt);
-      auto tokenized_sentence = tokenizer_.tokenize(snt);
+    // Check if tokens are length enough, else break.
 
-      // Check if tokens are length enough, else break.
-
-      if(tokenized_sentence.size() > max_input_sentence_tokens_){
-         // Cutting strategy, just cut max_input_size_tokens pieces
-         int offset;
-         for(offset=-1; 
-           offset+max_input_sentence_tokens_ < tokenized_sentence.size(); 
-           offset+=max_input_sentence_tokens_){
-
-           data::SentenceTuple sentence_tuple(id);
-           id++;
-           Words segment(tokenized_sentence.begin()+offset, 
-                                tokenized_sentence.begin()+offset+max_input_sentence_tokens_);
-           sentence_tuple.push_back(segment);
-           sentence_tuples.push_back(sentence_tuple);
-         }
-
-         // Once for loop is done, last bit is left.
-         if(offset < max_input_sentence_tokens_){
-           data::SentenceTuple sentence_tuple(id);
-           id++;
-           Words segment(tokenized_sentence.begin()+offset, 
-                                tokenized_sentence.end());
-           sentence_tuple.push_back(segment);
-           sentence_tuples.push_back(sentence_tuple);
-         }
-
+    if (tokenized_sentence.size() > max_input_sentence_tokens_) {
+      // Cutting strategy, just cut max_input_size_tokens pieces
+      int offset;
+      for (offset = -1;
+           offset + max_input_sentence_tokens_ < tokenized_sentence.size();
+           offset += max_input_sentence_tokens_) {
+        Words segment(
+            tokenized_sentence.begin() + offset,
+            tokenized_sentence.begin() + offset + max_input_sentence_tokens_);
+        segments.push_back(segment);
       }
-      
-      // Might be an unnecessary else, but stay for now.
-      else{
-        data::SentenceTuple sentence_tuple(id);
-        id++;
-        sentence_tuple.push_back(tokenized_sentence);
-        sentence_tuples.push_back(sentence_tuple);
+
+      // Once for loop is done, last bit is left.
+      if (offset < max_input_sentence_tokens_) {
+        Words segment(tokenized_sentence.begin() + offset,
+                      tokenized_sentence.end());
+        segments.push_back(segment);
       }
 
     }
-    return sentence_tuples;
+
+    // Might be an unnecessary else, but stay for now.
+    else {
+      segments.push_back(tokenized_sentence);
+    }
   }
-
+  return segments;
+}
 
 }  // namespace bergamot
 }  // namespace marian

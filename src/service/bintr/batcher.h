@@ -17,4 +17,21 @@
 
 class Batcher {
 
+public:
+  unsigned int max_input_tokens_;
+  unsigned int current_input_tokens_;
+
+
+  Batcher(Ptr<Options> options): current_input_tokens_(0) {
+    /* Reads options for batch configuration */
+    max_input_tokens_ = options->get<int>("max-input-tokens");
+  }
+
+  void add_segment(Words &segment){
+
+  }
+
+  std::vector<data::SentenceTuple> cleave_batch(){
+    /* Construct one-to-one mapping here */
+  }
 };

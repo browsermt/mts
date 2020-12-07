@@ -7,10 +7,8 @@ namespace marian
 
     BatchTranslator::BatchTranslator(DeviceId const device,
                                      std::vector<Ptr<Vocab const>> vocabs,
-                                     /* std::function<void(Ptr<History const>)> callback,*/
                                      Ptr<Options> options)
-        : device_(device), /*callback_(callback),*/
-          options_(options), vocabs_(vocabs)
+        : device_(device), options_(options), vocabs_(vocabs)
     {
       if (options_->hasAndNotEmpty("shortlist"))
       {
@@ -19,6 +17,18 @@ namespace marian
         bool shared_vcb = vocabs_.front() == vocabs_.back();
         slgen_ = New<data::LexicalShortlistGenerator>(options_, vocabs_.front(), vocabs_.back(), srcIdx, trgIdx, shared_vcb);
       }
+    }
+    
+    Ptr <data::CorpusBatch> BatchTranslator::construct_batch_from_segments(const std::vector<Words> &segments){
+      int id = 0;
+      std::vector<data::SentenceTuple> sentence_tuples;
+      for(auto &segment: segments){
+          data::SentenceTuple sentence_tuple(id);
+          sentence_tuple.push_back(segment);
+          sentence_tuples.push_back(sentence_tuple);
+          id++;
+      }
+      return construct_batch(sentence_tuples);
     }
 
     Ptr<data::CorpusBatch> BatchTranslator::construct_batch(const std::vector<data::SentenceTuple> &batchVector)

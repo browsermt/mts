@@ -46,6 +46,8 @@ namespace marian
       Ptr<data::ShortlistGenerator const> slgen_;
 
     public:
+      BatchTranslator(){};
+      BatchTranslator (const BatchTranslator &) = default;	
       BatchTranslator(DeviceId const device,
                       std::vector<Ptr<Vocab const>> vocabs,
                       /* std::function<void(Ptr<History const>)> callback,*/
@@ -95,6 +97,7 @@ namespace marian
 
       }
       marian::Ptr<data::CorpusBatch> construct_batch(const std::vector<data::SentenceTuple> &);
+      marian::Ptr<data::CorpusBatch> construct_batch_from_segments(const std::vector<Words> &);
     };
   } // namespace bergamot
 } // namespace marian
