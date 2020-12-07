@@ -57,6 +57,7 @@ class TextProcessor {
   TextProcessor(Ptr<Options>);
 
   std::vector<Words> query_to_segments(std::string &query);
+
 };
 
 }  // namespace bergamot

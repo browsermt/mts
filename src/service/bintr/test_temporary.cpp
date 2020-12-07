@@ -56,36 +56,15 @@ int main(int argc, char *argv[]) {
   std::cout << input << "\n";
 
   marian::bergamot::Service service(options);
-  auto translation_result_promise = service.translate(input);
-  auto translation_result = translation_result_promise.get_future().get();
+
+  auto translation_result_future = service.translate(input);
+  translation_result_future.wait();
+  auto translation_result = translation_result_future.get();
   for (int i=0; i < translation_result.sources.size(); i++){
     std::cout<< "[src] " << translation_result.sources[i]<<"\n";
     std::cout<< "[tgt] " << translation_result.translations[i]<<"\n";
     std::cout<< "--------------------------------\n";
   }
 
-  /*
-  auto segments = text_proc.query_to_segments(input);
-  for (auto words : segments) {
-    std::string processed_sentence;
-    processed_sentence = text_proc.tokenizer_.vocabs_.front()->decode(words);
-    std::cout << processed_sentence << "\n";
-  }
-
-  marian::bergamot::BatchTranslator batch_translator(
-      marian::CPU0, text_proc.tokenizer_.vocabs_, options);
-  auto batch = batch_translator.construct_batch_from_segments(segments);
-  auto histories =
-      batch_translator.translate_batch<marian::Ptr<marian::data::CorpusBatch>,
-                                       marian::BeamSearch>(batch);
-  for (auto history : histories) {
-    marian::NBestList onebest = history->nBest(1);
-    marian::Result result = onebest[0];  // Expecting only one result;
-    auto words = std::get<0>(result);
-    std::string processed_sentence;
-    processed_sentence = text_proc.tokenizer_.vocabs_.back()->decode(words);
-    std::cout << processed_sentence << "\n";
-  }
-  */
   return 0;
 }
