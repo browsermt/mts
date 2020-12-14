@@ -18,7 +18,7 @@ option(COMPILE_CUDA_SM50 "Compile GPU version with SM50 support" ON)
 option(COMPILE_CUDA_SM60 "Compile GPU version with SM60 support" ON)
 option(COMPILE_CUDA_SM70 "Compile GPU version with SM70 support" ON)
 option(COMPILE_EXAMPLES "Compile examples" OFF)
-option(COMPILE_REST_SERVER "Compile Marian REST server" ON)
+option(COMPILE_REST_SERVER "Compile Marian REST server" OFF)
 option(COMPILE_BERGAMOT_API "Compile Marian Bergamot API" ON)
 option(COMPILE_SERVER "Compile marian-server" OFF)
 option(COMPILE_TESTS "Compile tests" OFF)
@@ -52,11 +52,11 @@ message(STATUS "Project version: ${PROJECT_VERSION_STRING_FULL}")
 add_subdirectory(3rd_party)
 # There's a bug in the sentencepiece cmake file. The easiest hack to
 # fix this is to create a symlink.
-if (NOT MSVC)
-  ADD_CUSTOM_TARGET(link_sentencepiece_pc ALL COMMAND ${CMAKE_COMMAND} -E
-    create_symlink 3rd_party/marian/src/3rd_party/sentencepiece/sentencepiece.pc
-    sentencepiece.pc)
-endif(NOT MSVC)
+# if (NOT MSVC)
+#   ADD_CUSTOM_TARGET(link_sentencepiece_pc ALL COMMAND ${CMAKE_COMMAND} -E
+#     create_symlink 3rd_party/marian/src/3rd_party/sentencepiece/sentencepiece.pc
+#     sentencepiece.pc)
+# endif(NOT MSVC)
 
 # Install prefix files for sentence splitting
 install(DIRECTORY 3rd_party/ssplit-cpp/nonbreaking_prefixes

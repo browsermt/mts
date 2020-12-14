@@ -1,9 +1,9 @@
 add_subdirectory(marian)
 add_subdirectory(ssplit-cpp)
 
-include_directories(crow/include)
+# include_directories(crow/include)
 include_directories(ssplit-cpp/src)
-include_directories(rapidjson/include)
+# include_directories(rapidjson/include)
 
 ################################################################################
 # add_subdirectory does not propagate certain variables to the parent.
