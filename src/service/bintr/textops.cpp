@@ -1,5 +1,9 @@
 #include "textops.h"
 
+
+#include<pcrecpp.h> // For StringPiece
+
+
 namespace marian {
 namespace bergamot {
 SentenceSplitter::SentenceSplitter(marian::Ptr<marian::Options> options)
@@ -20,9 +24,10 @@ SentenceSplitter::SentenceSplitter(marian::Ptr<marian::Options> options)
 }
 
 ug::ssplit::SentenceStream SentenceSplitter::createSentenceStream(
-    std::string const &input,
+    string_view const &input,
     ug::ssplit::SentenceStream::splitmode const &mode) {
-  return std::move(ug::ssplit::SentenceStream(input, this->ssplit_, mode));
+      pcrecpp::StringPiece spiece(input.begin(), input.size());
+  return std::move(ug::ssplit::SentenceStream(spiece, this->ssplit_, mode));
 }
 
 ug::ssplit::SentenceStream::splitmode SentenceSplitter::string2splitmode(
@@ -61,11 +66,9 @@ std::vector<Ptr<const Vocab>> Tokenizer::loadVocabularies(
   return vocabs;
 }
 
-Words Tokenizer::tokenize(std::string const &snt) {
+Segment Tokenizer::tokenize(string_view const &snt, std::vector<string_view> &alignments) {
   // TODO(jerin): Bunch of hardcode here, 1, 0, need to get rid off somehow.
-  Words words = vocabs_[0]->encode(snt, addEos_, inference_);
-  if (words.empty()) words.push_back(Word::DEFAULT_EOS_ID);
-  return words;
+  return vocabs_[0]->encodePreservingSource(snt, alignments, false, true);
 }
 
 TextProcessor::TextProcessor(Ptr<Options> options)
@@ -76,18 +79,22 @@ TextProcessor::TextProcessor(Ptr<Options> options)
   assert(max_input_sentence_tokens_ > 0);
 }
 
-std::vector<Words> TextProcessor::query_to_segments(std::string &query) {
+std::vector<Segment> TextProcessor::query_to_segments(const string_view &query) {
   // TODO(jerin): Paragraph is hardcoded here. Keep, looks like?
   auto smode = sentence_splitter_.string2splitmode("paragraph", false);
   auto buf = sentence_splitter_.createSentenceStream(query, smode);
-  std::string snt;
-  std::vector<Words> segments;
+  pcrecpp::StringPiece snt;
+  std::vector<Segment> segments;
+  std::vector<string_view> alignments;
 
   while (buf >> snt) {
     LOG(trace, "SNT: {}", snt);
-    Words tokenized_sentence = tokenizer_.tokenize(snt);
+    string_view snt_string_view(snt.data(), snt.size());
+    Segment tokenized_sentence = tokenizer_.tokenize(snt_string_view, alignments);
+    segments.push_back(tokenized_sentence);
 
     // Check if tokens are length enough, else break.
+    /*
 
     if (tokenized_sentence.size() > max_input_sentence_tokens_) {
       // Cutting strategy, just cut max_input_size_tokens pieces
@@ -95,25 +102,27 @@ std::vector<Words> TextProcessor::query_to_segments(std::string &query) {
       for (offset = -1;
            offset + max_input_sentence_tokens_ < tokenized_sentence.size();
            offset += max_input_sentence_tokens_) {
-        Words segment(
+        Segment segment(
             tokenized_sentence.begin() + offset,
             tokenized_sentence.begin() + offset + max_input_sentence_tokens_);
-        segments.push_back(segment);
+        // segments.push_back(segment);
       }
 
       // Once for loop is done, last bit is left.
       if (offset < max_input_sentence_tokens_) {
-        Words segment(tokenized_sentence.begin() + offset,
+        Segment segment(tokenized_sentence.begin() + offset,
                       tokenized_sentence.end());
-        segments.push_back(segment);
+        // segments.push_back(segment);
       }
 
     }
 
     // Might be an unnecessary else, but stay for now.
     else {
-      segments.push_back(tokenized_sentence);
+      // segments.push_back(tokenized_sentence);
     }
+
+    */
   }
   return segments;
 }

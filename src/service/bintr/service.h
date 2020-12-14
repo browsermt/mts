@@ -7,6 +7,7 @@
 
 namespace marian {
 namespace bergamot {
+
 class Service {
   TextProcessor text_processor_;
   BatchTranslator batch_translator_;
@@ -30,6 +31,7 @@ class Service {
     std::promise<TranslationResult> translation_result_promise;
     TranslationResult translation_result;
 
+    /*
     auto segments = text_processor_.query_to_segments(input);
     for (auto words : segments) {
       std::string processed_sentence;
@@ -43,7 +45,6 @@ class Service {
         batch_translator_.translate_batch<Ptr<data::CorpusBatch>, BeamSearch>(
             batch);
 
-    /* Do stuff with histories */
     for (auto history : histories) {
       NBestList onebest = history->nBest(1);
       Result result = onebest[0];  // Expecting only one result;
@@ -51,10 +52,11 @@ class Service {
       std::string processed_sentence;
       processed_sentence =
           text_processor_.tokenizer_.vocabs_.back()->decode(words);
-      /* std::cout << processed_sentence << "\n"; */
       translation_result.translations.push_back(processed_sentence);
     }
     translation_result_promise.set_value(translation_result);
+    */
+
     return translation_result_promise.get_future();
   }
 
@@ -64,6 +66,14 @@ class Service {
 
     std::promise<TranslationResult> translation_result_promise;
     auto segments = text_processor_.query_to_segments(input);
+
+    // std::cout << "Segment size:" << segments.size() << std::endl;
+    // for(auto segment: segments){
+    //   std::cout << "Tokens size:" << segment.size() << std::endl;
+    //   for(auto token: segment){
+    //     std::cout << token.begin << ":" << token.end << " " << token.Id.toString() << std::endl;
+    //   }
+    // }
 
     /* TODO(jerin): Fix some hardcodes below; */
     Request request(0, segments, translation_result_promise);

@@ -1,6 +1,7 @@
 #include "data/types.h"
 #include "sys/time.h"
 #include "translation_result.h"
+#include "definitions.h"
 
 namespace marian {
 namespace bergamot {
@@ -10,7 +11,7 @@ struct Request {
   int index_;
   std::promise<TranslationResult> *response_;
 
-  Request(int index, std::vector<Words> &segments,
+  Request(int index, std::vector<Segment> &segments,
           std::promise<TranslationResult> &translation_result_promise)
       : index_(index) {
     /* Construction should mean item is queued for translation  */

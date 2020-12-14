@@ -6,6 +6,8 @@
 
 #pragma once
 
+
+
 #include "common/definitions.h"
 #include "common/options.h"
 #include "ssplit/ssplit.h"
@@ -15,9 +17,14 @@
 #include "common/types.h"  // missing in shortlist.h
 #include "common/utils.h"
 #include "data/shortlist.h"
+#include "data/sentencepiece_vocab.h"
+#include "data/vocab_base.h"
+#include "definitions.h"
 
 namespace marian {
 namespace bergamot {
+
+
 class SentenceSplitter;
 
 class SentenceSplitter {
@@ -33,7 +40,7 @@ class SentenceSplitter {
   SentenceSplitter(Ptr<Options> options);
 
   ug::ssplit::SentenceStream createSentenceStream(
-      std::string const &input,
+      string_view const &input,
       ug::ssplit::SentenceStream::splitmode const &mode);
   ug::ssplit::SentenceStream::splitmode string2splitmode(
       const std::string &m, bool throwOnError /*=false*/);
@@ -46,7 +53,7 @@ class Tokenizer {
   bool addEos_;
   Tokenizer(Ptr<Options>);
   std::vector<Ptr<const Vocab>> loadVocabularies(Ptr<Options> options);
-  Words tokenize(std::string const &snt);
+  Segment tokenize(string_view const &snt, std::vector<string_view> &alignments);
 };
 
 class TextProcessor {
@@ -56,7 +63,7 @@ class TextProcessor {
   SentenceSplitter sentence_splitter_;
   TextProcessor(Ptr<Options>);
 
-  std::vector<Words> query_to_segments(std::string &query);
+  std::vector<Segment> query_to_segments(const string_view &query);
 
 };
 
