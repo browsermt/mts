@@ -6,6 +6,8 @@
 
 namespace marian {
 namespace bergamot {
+
+
 SentenceSplitter::SentenceSplitter(marian::Ptr<marian::Options> options)
     : options_(options) {
   auto ssplit_prefix_file =
@@ -91,38 +93,30 @@ std::vector<Segment> TextProcessor::query_to_segments(const string_view &query) 
     LOG(trace, "SNT: {}", snt);
     string_view snt_string_view(snt.data(), snt.size());
     Segment tokenized_sentence = tokenizer_.tokenize(snt_string_view, alignments);
-    segments.push_back(tokenized_sentence);
-
-    // Check if tokens are length enough, else break.
-    /*
 
     if (tokenized_sentence.size() > max_input_sentence_tokens_) {
-      // Cutting strategy, just cut max_input_size_tokens pieces
       int offset;
-      for (offset = -1;
+      for (offset = 0;
            offset + max_input_sentence_tokens_ < tokenized_sentence.size();
            offset += max_input_sentence_tokens_) {
-        Segment segment(
-            tokenized_sentence.begin() + offset,
-            tokenized_sentence.begin() + offset + max_input_sentence_tokens_);
-        // segments.push_back(segment);
+        
+        auto start = tokenized_sentence.begin() + offset;
+        Segment segment(start, start + max_input_sentence_tokens_);
+        segments.push_back(segment);
       }
 
-      // Once for loop is done, last bit is left.
       if (offset < max_input_sentence_tokens_) {
-        Segment segment(tokenized_sentence.begin() + offset,
-                      tokenized_sentence.end());
-        // segments.push_back(segment);
+        auto start = tokenized_sentence.begin() + offset;
+        Segment segment(start, tokenized_sentence.end());
+        segments.push_back(segment);
       }
 
     }
 
-    // Might be an unnecessary else, but stay for now.
     else {
-      // segments.push_back(tokenized_sentence);
+      segments.push_back(tokenized_sentence);
     }
 
-    */
   }
   return segments;
 }

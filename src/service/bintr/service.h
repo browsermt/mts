@@ -31,7 +31,6 @@ class Service {
     std::promise<TranslationResult> translation_result_promise;
     TranslationResult translation_result;
 
-    /*
     auto segments = text_processor_.query_to_segments(input);
     for (auto words : segments) {
       std::string processed_sentence;
@@ -55,7 +54,6 @@ class Service {
       translation_result.translations.push_back(processed_sentence);
     }
     translation_result_promise.set_value(translation_result);
-    */
 
     return translation_result_promise.get_future();
   }
@@ -81,8 +79,8 @@ class Service {
   }
 
   std::future<TranslationResult> translate(std::string &input) {
-    return queue(input);
-    // return trivial_translate(input);
+    // return queue(input);
+    return trivial_translate(input);
   }
 };
 
