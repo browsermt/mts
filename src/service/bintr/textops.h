@@ -37,7 +37,7 @@ class Tokenizer {
   bool addEOS_;
   Tokenizer(Ptr<Options>);
   std::vector<Ptr<const Vocab>> loadVocabularies(Ptr<Options> options);
-  Segment tokenize(string_view const &snt, std::vector<string_view> &alignments);
+  Segment tokenize(string_view const &snt, Alignments &alignments);
 };
 
 class TextProcessor {
@@ -47,7 +47,7 @@ class TextProcessor {
   SentenceSplitter sentence_splitter_;
   TextProcessor(Ptr<Options>);
 
-  void query_to_segments(const string_view &query, Ptr<std::vector<Segment>>);
+  void query_to_segments(const string_view &query, Ptr<Segments>, Ptr<Alignments>);
 
 };
 

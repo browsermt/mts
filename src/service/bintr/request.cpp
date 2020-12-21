@@ -6,9 +6,10 @@
 
 namespace marian {
   namespace bergamot {
-    Request::Request(Ptr<std::vector<Segment>> segments,
-        std::promise<TranslationResult> &translation_result_promise)
-      : segments(segments){
+    Request::Request(Ptr<std::vector<Segment>> segments, 
+                    Ptr<Alignments> alignments, 
+                    std::promise<TranslationResult> &translation_result_promise)
+      : segments(segments), alignments(alignments){
         /* Construction should mean item is queued for translation  */
         struct timezone *tz = NULL;
         gettimeofday(&created, tz);

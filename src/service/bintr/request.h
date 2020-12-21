@@ -15,8 +15,9 @@ struct Request {
   /* Wraps around a request, to execute barrier/synchronization */
   std::promise<TranslationResult> *response_;
   Ptr<std::vector<Segment>> segments;
+  Ptr<Alignments> alignments;
   timeval created;
-  Request(Ptr<std::vector<Segment>> , std::promise<TranslationResult> &);
+  Request(Ptr<std::vector<Segment>>, Ptr<Alignments>, std::promise<TranslationResult> &);
   void join();
   void cancel();
   void set_translation(int index, Ptr<History> history);

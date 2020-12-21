@@ -13,8 +13,10 @@ namespace marian {
       std::promise<TranslationResult> translation_result_promise;
       TranslationResult translation_result;
 
-      Ptr<std::vector<Segment>> segments = New<std::vector<Segment>>();
-      text_processor_.query_to_segments(input, segments);
+      Ptr<Segments> segments = New<Segments>();
+      Ptr<Alignments> alignments
+        = New<Alignments>();
+      text_processor_.query_to_segments(input, segments, alignments);
       std::cout<<"Segments proc"<<std::endl;
       for (auto words : *segments) {
         std::string processed_sentence;
@@ -47,11 +49,14 @@ namespace marian {
     std::future<TranslationResult> Service::queue(string_view &input) {
 
       std::promise<TranslationResult> translation_result_promise;
-      Ptr<std::vector<Segment>> segments = New<std::vector<Segment>>();
+      Ptr<Segments> segments = New<Segments>();
+      Ptr<Alignments> alignments = New<Alignments>();
 
       std::cout<<"Query to segments" << std::endl;
-      text_processor_.query_to_segments(input, segments);
-      Ptr<Request> request = New<Request>(segments, translation_result_promise);
+      text_processor_.query_to_segments(input, segments, alignments);
+      Ptr<Request> request = New<Request>(segments, 
+                                          alignments, 
+                                          translation_result_promise);
       std::cout<<"Queued" << std::endl;
       for(int i=0; i<segments->size(); i++){
         MultiFactorPriority priority(i, request);

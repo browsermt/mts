@@ -67,7 +67,7 @@ std::vector<Ptr<const Vocab>> Tokenizer::loadVocabularies(
   return vocabs;
 }
 
-Segment Tokenizer::tokenize(string_view const &snt, std::vector<string_view> &alignments) {
+Segment Tokenizer::tokenize(string_view const &snt, Alignments &alignments) {
   // TODO(jerin): Bunch of hardcode here, 1, 0, need to get rid off somehow.
   return vocabs_[0]->encodePreservingSource(snt, alignments, addEOS_, inference_);
 }
@@ -81,18 +81,17 @@ TextProcessor::TextProcessor(Ptr<Options> options)
 }
 
 void TextProcessor::query_to_segments(const string_view &query, 
-                                      Ptr<std::vector<Segment>> segments) {
-  // TODO(jerin): Paragraph is hardcoded here. Keep, looks like?
+                                      Ptr<Segments> segments, 
+                                    Ptr<Alignments> alignments){
   auto buf = sentence_splitter_.createSentenceStream(query);
   pcrecpp::StringPiece snt;
-  /*Ptr<std::vector<Segment>> segments = New<std::vector<Segment>>();*/
-  std::vector<std::vector<string_view>> alignments;
 
   while (buf >> snt) {
     LOG(trace, "SNT: {}", snt);
     string_view snt_string_view(snt.data(), snt.size());
-    std::vector<string_view> snt_alignments;
+    Alignments snt_alignments;
     Segment tokenized_sentence = tokenizer_.tokenize(snt_string_view, snt_alignments);
+    *alignments = snt_alignments;
 
     if (tokenized_sentence.size() > max_input_sentence_tokens_) {
       int offset;
@@ -102,18 +101,21 @@ void TextProcessor::query_to_segments(const string_view &query,
         
         auto start = tokenized_sentence.begin() + offset;
         Segment segment(start, start + max_input_sentence_tokens_);
+        segment.push_back(tokenizer_.vocabs_[0]->getEosId());
         segments->push_back(segment);
       }
 
       if (offset < max_input_sentence_tokens_) {
         auto start = tokenized_sentence.begin() + offset;
         Segment segment(start, tokenized_sentence.end());
+        segment.push_back(tokenizer_.vocabs_[0]->getEosId());
         segments->push_back(segment);
       }
 
     }
 
     else {
+      tokenized_sentence.push_back(tokenizer_.vocabs_[0]->getEosId());
       segments->push_back(tokenized_sentence);
     }
 
