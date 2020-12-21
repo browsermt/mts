@@ -4,6 +4,7 @@
 #include "translation_result.h"
 #include "definitions.h"
 #include <future>
+#include "translator/beam_search.h"
 
 
 namespace marian {
@@ -13,13 +14,12 @@ namespace bergamot {
 struct Request {
   /* Wraps around a request, to execute barrier/synchronization */
   std::promise<TranslationResult> *response_;
-  std::vector<Segment> *segments;
-  timeval *created;
-  Request(std::vector<Segment> &, std::promise<TranslationResult> &);
-  void cancel();
+  Ptr<std::vector<Segment>> segments;
+  timeval created;
+  Request(Ptr<std::vector<Segment>> , std::promise<TranslationResult> &);
   void join();
-  void queue_segments();
-
+  void cancel();
+  void set_translation(int index, Ptr<History> history);
 };
 }  // namespace bergamot
 }  // namespace marian

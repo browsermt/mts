@@ -1,6 +1,7 @@
 #pragma once
 #include "sys/time.h"
 #include "request.h"
+#include "data/types.h"
 
 namespace marian {
   namespace bergamot {
@@ -8,13 +9,14 @@ namespace marian {
     class Request;
     struct MultiFactorPriority {
       /* Some form of priority. Replace with this on a PriorityQueue */
-        unsigned int index;
-        Request *request;
-        MultiFactorPriority(int, timeval& , Request &);
+        int index;
+        Ptr<Request> request;
+        MultiFactorPriority(int, Ptr<Request>);
         int num_tokens();
     };
 
     bool operator<(const MultiFactorPriority& a, const MultiFactorPriority& b);
+    bool operator==(const MultiFactorPriority& a, const MultiFactorPriority& b);
 
   }
 }

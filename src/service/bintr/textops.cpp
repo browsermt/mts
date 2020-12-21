@@ -80,11 +80,12 @@ TextProcessor::TextProcessor(Ptr<Options> options)
   assert(max_input_sentence_tokens_ > 0);
 }
 
-std::vector<Segment> TextProcessor::query_to_segments(const string_view &query) {
+void TextProcessor::query_to_segments(const string_view &query, 
+                                      Ptr<std::vector<Segment>> segments) {
   // TODO(jerin): Paragraph is hardcoded here. Keep, looks like?
   auto buf = sentence_splitter_.createSentenceStream(query);
   pcrecpp::StringPiece snt;
-  std::vector<Segment> segments;
+  /*Ptr<std::vector<Segment>> segments = New<std::vector<Segment>>();*/
   std::vector<std::vector<string_view>> alignments;
 
   while (buf >> snt) {
@@ -101,23 +102,22 @@ std::vector<Segment> TextProcessor::query_to_segments(const string_view &query) 
         
         auto start = tokenized_sentence.begin() + offset;
         Segment segment(start, start + max_input_sentence_tokens_);
-        segments.push_back(segment);
+        segments->push_back(segment);
       }
 
       if (offset < max_input_sentence_tokens_) {
         auto start = tokenized_sentence.begin() + offset;
         Segment segment(start, tokenized_sentence.end());
-        segments.push_back(segment);
+        segments->push_back(segment);
       }
 
     }
 
     else {
-      segments.push_back(tokenized_sentence);
+      segments->push_back(tokenized_sentence);
     }
 
   }
-  return segments;
 }
 
 }  // namespace bergamot

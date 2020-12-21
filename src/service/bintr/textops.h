@@ -47,7 +47,7 @@ class TextProcessor {
   SentenceSplitter sentence_splitter_;
   TextProcessor(Ptr<Options>);
 
-  std::vector<Segment> query_to_segments(const string_view &query);
+  void query_to_segments(const string_view &query, Ptr<std::vector<Segment>>);
 
 };
 

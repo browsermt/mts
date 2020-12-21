@@ -17,10 +17,10 @@ BatchTranslator::BatchTranslator(DeviceId const device,
 }
 
 Ptr<data::CorpusBatch> BatchTranslator::construct_batch_from_segments(
-    const std::vector<Words> &segments) {
+    const Ptr<std::vector<Words>> segments) {
   int id = 0;
   std::vector<data::SentenceTuple> sentence_tuples;
-  for (auto &segment : segments) {
+  for (auto &segment : *segments) {
     data::SentenceTuple sentence_tuple(id);
     sentence_tuple.push_back(segment);
     sentence_tuples.push_back(sentence_tuple);

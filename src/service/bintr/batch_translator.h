@@ -79,7 +79,7 @@ class BatchTranslator {
   marian::Ptr<data::CorpusBatch> construct_batch(
       const std::vector<data::SentenceTuple> &);
   marian::Ptr<data::CorpusBatch> construct_batch_from_segments(
-      const std::vector<Words> &);
+      const Ptr<std::vector<Words>>);
 };
 }  // namespace bergamot
 }  // namespace marian

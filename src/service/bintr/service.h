@@ -5,6 +5,7 @@
 #include "textops.h"
 #include "batch_translator.h"
 #include "batcher.h"
+#include "multifactor_priority.h"
 
 namespace marian {
 namespace bergamot {
@@ -12,7 +13,7 @@ namespace bergamot {
 class Service {
   TextProcessor text_processor_;
   BatchTranslator batch_translator_;
-  Batcher *batcher_;
+  Batcher batcher_;
 
  public:
   Service(Ptr<Options> );

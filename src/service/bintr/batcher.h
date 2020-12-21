@@ -4,6 +4,7 @@
 
 #include <queue>
 #include <vector>
+#include <set>
 
 
 namespace marian {
@@ -12,9 +13,9 @@ namespace marian {
 
     class Batcher {
       unsigned int max_input_tokens_;
-      unsigned int maxi_batch_size_;
+      unsigned int max_input_sentence_tokens_;
       unsigned int current_input_tokens_;
-      std::vector<std::priority_queue<MultiFactorPriority>> bucket;
+      std::vector<std::set<MultiFactorPriority>> bucket;
 
       public:
       Batcher(Ptr<Options> options);
