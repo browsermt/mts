@@ -1,6 +1,5 @@
 #include "textops.h"
 
-
 #include<pcrecpp.h> // For StringPiece
 
 
@@ -10,8 +9,10 @@ namespace bergamot {
 
 SentenceSplitter::SentenceSplitter(marian::Ptr<marian::Options> options)
     : options_(options) {
-  auto ssplit_prefix_file =
-      options_->get<std::string>("ssplit-prefix-file", "");
+
+  std::string smode_str = options_->get<std::string>("ssplit-mode", "");
+  mode_ = string2splitmode(smode_str);
+  std::string ssplit_prefix_file = options_->get<std::string>("ssplit-prefix-file", "");
 
   if (ssplit_prefix_file.size()) {
     ssplit_prefix_file = marian::cli::interpolateEnvVars(ssplit_prefix_file);
@@ -25,15 +26,12 @@ SentenceSplitter::SentenceSplitter(marian::Ptr<marian::Options> options)
   }
 }
 
-ug::ssplit::SentenceStream SentenceSplitter::createSentenceStream(
-    string_view const &input,
-    ug::ssplit::SentenceStream::splitmode const &mode) {
-      pcrecpp::StringPiece spiece(input.begin(), input.size());
-  return std::move(ug::ssplit::SentenceStream(spiece, this->ssplit_, mode));
+ug::ssplit::SentenceStream SentenceSplitter::createSentenceStream(const string_view &input) {
+  pcrecpp::StringPiece spiece(input.begin(), input.size());
+  return std::move(ug::ssplit::SentenceStream(spiece, this->ssplit_, mode_));
 }
 
-ug::ssplit::SentenceStream::splitmode SentenceSplitter::string2splitmode(
-    const std::string &m, bool throwOnError /*=false*/) {
+ug::ssplit::SentenceStream::splitmode SentenceSplitter::string2splitmode(const std::string &m) {
   typedef ug::ssplit::SentenceStream::splitmode splitmode;
   // @TODO: throw Exception on error
   if (m == "sentence" || m == "Sentence")
@@ -46,9 +44,10 @@ ug::ssplit::SentenceStream::splitmode SentenceSplitter::string2splitmode(
   return splitmode::wrapped_text;
 }
 
-Tokenizer::Tokenizer(Ptr<Options> options) : inference_(true), addEos_(true) {
+Tokenizer::Tokenizer(Ptr<Options> options) : inference_(true), addEOS_(false) {
   vocabs_ = loadVocabularies(options);
 }
+
 std::vector<Ptr<const Vocab>> Tokenizer::loadVocabularies(
     Ptr<Options> options) {
   // @TODO: parallelize vocab loading for faster startup
@@ -70,7 +69,7 @@ std::vector<Ptr<const Vocab>> Tokenizer::loadVocabularies(
 
 Segment Tokenizer::tokenize(string_view const &snt, std::vector<string_view> &alignments) {
   // TODO(jerin): Bunch of hardcode here, 1, 0, need to get rid off somehow.
-  return vocabs_[0]->encodePreservingSource(snt, alignments, false, true);
+  return vocabs_[0]->encodePreservingSource(snt, alignments, addEOS_, inference_);
 }
 
 TextProcessor::TextProcessor(Ptr<Options> options)
@@ -83,16 +82,16 @@ TextProcessor::TextProcessor(Ptr<Options> options)
 
 std::vector<Segment> TextProcessor::query_to_segments(const string_view &query) {
   // TODO(jerin): Paragraph is hardcoded here. Keep, looks like?
-  auto smode = sentence_splitter_.string2splitmode("paragraph", false);
-  auto buf = sentence_splitter_.createSentenceStream(query, smode);
+  auto buf = sentence_splitter_.createSentenceStream(query);
   pcrecpp::StringPiece snt;
   std::vector<Segment> segments;
-  std::vector<string_view> alignments;
+  std::vector<std::vector<string_view>> alignments;
 
   while (buf >> snt) {
     LOG(trace, "SNT: {}", snt);
     string_view snt_string_view(snt.data(), snt.size());
-    Segment tokenized_sentence = tokenizer_.tokenize(snt_string_view, alignments);
+    std::vector<string_view> snt_alignments;
+    Segment tokenized_sentence = tokenizer_.tokenize(snt_string_view, snt_alignments);
 
     if (tokenized_sentence.size() > max_input_sentence_tokens_) {
       int offset;

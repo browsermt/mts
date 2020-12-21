@@ -1,29 +1,21 @@
+#pragma once
 #include "sys/time.h"
+#include "request.h"
 
-struct MultiFactorPriority {
-  /* Some form of priority. Replace with this on a PriorityQueue */
-  unsigned int index_;
-  timeval created_;
-  static timezone tz = NULL;
-  MultiFactorPriority(int index, timeval& created)
-      : index_(index), created_(created) {}
+namespace marian {
+  namespace bergamot {
 
-  float evaluate(const timeval& baseline) {
-    /* Getting time spent since created. */
-    timeval now, delta;
-    gettimeofday(now, tz);
-    timeval_subtract_(delta, now, created);
+    class Request;
+    struct MultiFactorPriority {
+      /* Some form of priority. Replace with this on a PriorityQueue */
+        unsigned int index;
+        Request *request;
+        MultiFactorPriority(int, timeval& , Request &);
+        int num_tokens();
+    };
 
-    /* Time aspect is ignored at the moment
-     * TODO(jerin): Extend
-     */
+    bool operator<(const MultiFactorPriority& a, const MultiFactorPriority& b);
 
-    return index;
   }
 }
 
-/* Trick the priority queue */
-friend bool
-operator<(MultiFactorPriority& a, MultiFactorPriority& b) {
-  return a.evaluate() < b.evaluate();
-}

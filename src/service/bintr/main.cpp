@@ -6,10 +6,10 @@
 #include "common/timer.h"
 #include "common/utils.h"
 #include "marian.h"
-#include "textops.h"
 #include "translator/beam_search.h"
 #include "translator/history.h"
 #include "translator/output_printer.h"
+
 #include "service.h"
 
 
@@ -31,6 +31,8 @@ int main(int argc, char *argv[]) {
   cp.addOption<std::string>(
       "--ssplit-prefix-file", "Server Options",
       "File with nonbreaking prefixes for sentence splitting.");
+  cp.addOption<std::string>(
+      "--ssplit-mode", "Server Options", "[paragraph, sentence, wrapped_text]");
   cp.addOption<std::string>("--source-language", "Server Options",
                             "source language of translation service");
   cp.addOption<std::string>("--target-language", "Server Options",
@@ -55,9 +57,11 @@ int main(int argc, char *argv[]) {
   std::getline(std::cin, input);
   std::cout << input << "\n";
 
+  marian::string_view input_view(input);
+
   marian::bergamot::Service service(options);
 
-  auto translation_result_future = service.translate(input);
+  auto translation_result_future = service.translate(input_view);
   translation_result_future.wait();
   auto translation_result = translation_result_future.get();
   for (int i=0; i < translation_result.sources.size(); i++){

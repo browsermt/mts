@@ -33,7 +33,11 @@ endif(CUDA_FOUND)
 # BERGAMOT_API
 if (COMPILE_BERGAMOT_API)
   add_executable(main bintr/main.cpp)
-  add_library(libbergamot STATIC bintr/textops.cpp bintr/batch_translator.cpp)
+  add_library(libbergamot STATIC bintr/textops.cpp
+      bintr/batch_translator.cpp bintr/request.cpp
+      bintr/batcher.cpp
+      bintr/service.cpp
+      bintr/multifactor_priority.cpp)
   set_target_properties(
     main PROPERTIES OUTPUT bergamot-cli
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"

@@ -1,56 +1,40 @@
-
-/*
- * Interact with sentencepiece and ssplit to preprocess or postprocess
- * sentences.
- */
-
 #pragma once
-
-
 
 #include "common/definitions.h"
 #include "common/options.h"
 #include "ssplit/ssplit.h"
-// #include "data/types.h"
-#include "common/definitions.h"
 #include "common/logging.h"
 #include "common/types.h"  // missing in shortlist.h
 #include "common/utils.h"
 #include "data/shortlist.h"
 #include "data/sentencepiece_vocab.h"
-#include "data/vocab_base.h"
 #include "definitions.h"
 
 namespace marian {
 namespace bergamot {
 
 
-class SentenceSplitter;
-
 class SentenceSplitter {
   /* Using this class to hide away ssplit mechanics */
  private:
   ug::ssplit::SentenceSplitter ssplit_;
   Ptr<Options> options_;
+  ug::ssplit::SentenceStream::splitmode mode_;
+  ug::ssplit::SentenceStream::splitmode string2splitmode(const std::string &m);
 
  public:
-  typedef ug::ssplit::SentenceStream::splitmode ssplitmode;
 
   // Constructor
   SentenceSplitter(Ptr<Options> options);
-
-  ug::ssplit::SentenceStream createSentenceStream(
-      string_view const &input,
-      ug::ssplit::SentenceStream::splitmode const &mode);
-  ug::ssplit::SentenceStream::splitmode string2splitmode(
-      const std::string &m, bool throwOnError /*=false*/);
+  ug::ssplit::SentenceStream createSentenceStream(string_view const &input);
 };
+
 
 class Tokenizer {
  public:
   std::vector<Ptr<Vocab const>> vocabs_;
   bool inference_;
-  bool addEos_;
+  bool addEOS_;
   Tokenizer(Ptr<Options>);
   std::vector<Ptr<const Vocab>> loadVocabularies(Ptr<Options> options);
   Segment tokenize(string_view const &snt, std::vector<string_view> &alignments);
