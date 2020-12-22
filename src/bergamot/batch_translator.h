@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __BERGAMOT_BATCH_TRANSLATOR_H
+#define __BERGAMOT_BATCH_TRANSLATOR_H
 
 #include <ctime>
 #include <functional>
@@ -84,3 +85,5 @@ class BatchTranslator {
 };
 }  // namespace bergamot
 }  // namespace marian
+
+#endif //  __BERGAMOT_BATCH_TRANSLATOR_H

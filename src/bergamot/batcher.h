@@ -1,4 +1,6 @@
-#pragma once
+#ifndef __BERGAMOT_BATCHER_H
+#define __BERGAMOT_BATCHER_H
+
 #include "common/options.h"
 #include "data/corpus_base.h"
 #include "definitions.h"
@@ -27,3 +29,5 @@ class Batcher {
 }  // namespace marian
 
 #include "multifactor_priority.h"
+
+#endif // __BERGAMOT_BATCHER_H

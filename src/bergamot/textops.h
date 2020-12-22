@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __BERGAMOT_TEXTOPS_H
+#define __BERGAMOT_TEXTOPS_H
 
 #include "common/definitions.h"
 #include "common/options.h"
@@ -55,3 +56,5 @@ class TextProcessor {
 
 }  // namespace bergamot
 }  // namespace marian
+
+#endif // __BERGAMOT_TEXTOPS_H

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __BERGAMOT_REQUEST_H
+#define __BERGAMOT_REQUEST_H
 #include "data/types.h"
 #include "sys/time.h"
 #include "translation_result.h"
@@ -33,3 +34,5 @@ struct Request {
 
 }  // namespace bergamot
 }  // namespace marian
+
+#endif // __BERGAMOT_REQUEST_H

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef __BERGAMOT_MULTIFACTOR_PRIORITY_H
+#define __BERGAMOT_MULTIFACTOR_PRIORITY_H
+
 #include "sys/time.h"
 #include "request.h"
 #include "data/types.h"
@@ -24,3 +26,4 @@ namespace marian {
   }
 }
 
+#endif // __BERGAMOT_MULTIFACTOR_PRIORITY_H
