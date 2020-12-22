@@ -1,6 +1,9 @@
 #include "textops.h"
-
-#include<pcrecpp.h> // For StringPiece
+#include <pcrecpp.h>
+#include <string>
+#include <vector>
+#include <unordered_map>
+#include <utility>
 
 
 namespace marian {
@@ -12,12 +15,17 @@ SentenceSplitter::SentenceSplitter(marian::Ptr<marian::Options> options)
 
   std::string smode_str = options_->get<std::string>("ssplit-mode", "");
   mode_ = string2splitmode(smode_str);
-  std::string ssplit_prefix_file = options_->get<std::string>("ssplit-prefix-file", "");
+  std::string ssplit_prefix_file = options_->get<std::string>
+                                    ("ssplit-prefix-file", "");
 
   if (ssplit_prefix_file.size()) {
-    ssplit_prefix_file = marian::cli::interpolateEnvVars(ssplit_prefix_file);
-    LOG(info, "Loading protected prefixes for sentence splitting from {}",
+    ssplit_prefix_file
+        = marian::cli::interpolateEnvVars(ssplit_prefix_file);
+
+    LOG(info,
+        "Loading protected prefixes for sentence splitting from {}",
         ssplit_prefix_file);
+
     ssplit_.load(ssplit_prefix_file);
   } else {
     LOG(warn,
@@ -26,12 +34,14 @@ SentenceSplitter::SentenceSplitter(marian::Ptr<marian::Options> options)
   }
 }
 
-ug::ssplit::SentenceStream SentenceSplitter::createSentenceStream(const string_view &input) {
+ug::ssplit::SentenceStream
+SentenceSplitter::createSentenceStream(const string_view &input) {
   pcrecpp::StringPiece spiece(input.begin(), input.size());
   return std::move(ug::ssplit::SentenceStream(spiece, this->ssplit_, mode_));
 }
 
-ug::ssplit::SentenceStream::splitmode SentenceSplitter::string2splitmode(const std::string &m) {
+ug::ssplit::SentenceStream::splitmode
+SentenceSplitter::string2splitmode(const std::string &m) {
   typedef ug::ssplit::SentenceStream::splitmode splitmode;
   // @TODO: throw Exception on error
   if (m == "sentence" || m == "Sentence")
@@ -44,7 +54,8 @@ ug::ssplit::SentenceStream::splitmode SentenceSplitter::string2splitmode(const s
   return splitmode::wrapped_text;
 }
 
-Tokenizer::Tokenizer(Ptr<Options> options) : inference_(true), addEOS_(false) {
+Tokenizer::Tokenizer(Ptr<Options> options):
+                inference_(true), addEOS_(false) {
   vocabs_ = loadVocabularies(options);
 }
 
@@ -67,42 +78,48 @@ std::vector<Ptr<const Vocab>> Tokenizer::loadVocabularies(
   return vocabs;
 }
 
-Segment Tokenizer::tokenize(string_view const &snt, Alignments &alignments) {
+Segment Tokenizer::tokenize(string_view const &snt, Alignment &alignment) {
   // TODO(jerin): Bunch of hardcode here, 1, 0, need to get rid off somehow.
-  return vocabs_[0]->encodePreservingSource(snt, alignments, addEOS_, inference_);
+  return vocabs_[0]->encodePreservingSource(snt,
+                                            alignment,
+                                            addEOS_,
+                                            inference_);
 }
 
 TextProcessor::TextProcessor(Ptr<Options> options)
     : tokenizer_(options), sentence_splitter_(options) {
   max_input_sentence_tokens_ = options->get<int>("max-input-sentence-tokens");
-
+  max_input_sentence_tokens_ = max_input_sentence_tokens_ - 1; // Account for EOS
   // Dirty assert, should do at configparse
   assert(max_input_sentence_tokens_ > 0);
 }
 
-void TextProcessor::query_to_segments(const string_view &query, 
-                                      Ptr<Segments> segments, 
-                                    Ptr<Alignments> alignments){
+void TextProcessor::query_to_segments(const string_view &query,
+                                      Ptr<Segments> segments,
+                                      Ptr<Alignments> alignments) {
   auto buf = sentence_splitter_.createSentenceStream(query);
   pcrecpp::StringPiece snt;
 
   while (buf >> snt) {
     LOG(trace, "SNT: {}", snt);
     string_view snt_string_view(snt.data(), snt.size());
-    Alignments snt_alignments;
-    Segment tokenized_sentence = tokenizer_.tokenize(snt_string_view, snt_alignments);
-    *alignments = snt_alignments;
+    Alignment snt_alignment;
+    Segment tokenized_sentence
+        = tokenizer_.tokenize(snt_string_view, snt_alignment);
 
     if (tokenized_sentence.size() > max_input_sentence_tokens_) {
       int offset;
       for (offset = 0;
            offset + max_input_sentence_tokens_ < tokenized_sentence.size();
            offset += max_input_sentence_tokens_) {
-        
         auto start = tokenized_sentence.begin() + offset;
         Segment segment(start, start + max_input_sentence_tokens_);
         segment.push_back(tokenizer_.vocabs_[0]->getEosId());
         segments->push_back(segment);
+
+        auto astart = snt_alignment.begin() + offset;
+        Alignment segment_alignment(astart, astart+offset);
+        alignments->push_back(segment_alignment);
       }
 
       if (offset < max_input_sentence_tokens_) {
@@ -110,15 +127,17 @@ void TextProcessor::query_to_segments(const string_view &query,
         Segment segment(start, tokenized_sentence.end());
         segment.push_back(tokenizer_.vocabs_[0]->getEosId());
         segments->push_back(segment);
+
+        auto astart = snt_alignment.begin() + offset;
+        Alignment segment_alignment(astart, snt_alignment.end());
+        alignments->push_back(segment_alignment);
       }
 
-    }
-
-    else {
+    } else {
       tokenized_sentence.push_back(tokenizer_.vocabs_[0]->getEosId());
       segments->push_back(tokenized_sentence);
+      alignments->push_back(snt_alignment);
     }
-
   }
 }
 

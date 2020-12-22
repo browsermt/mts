@@ -5,22 +5,31 @@
 #include "definitions.h"
 #include <future>
 #include "translator/beam_search.h"
+#include <unordered_map>
+
 
 
 namespace marian {
 namespace bergamot {
 
-
 struct Request {
-  /* Wraps around a request, to execute barrier/synchronization */
+  string_view reference_;
   std::promise<TranslationResult> *response_;
   Ptr<std::vector<Segment>> segments;
+  std::unordered_map<int, std::string> translations;
   Ptr<Alignments> alignments;
   timeval created;
-  Request(Ptr<std::vector<Segment>>, Ptr<Alignments>, std::promise<TranslationResult> &);
+  bool cancelled_;
+
+
+  Request(string_view, Ptr<Segments>, Ptr<Alignments>,
+          std::promise<TranslationResult> &);
   void join();
   void cancel();
-  void set_translation(int index, Ptr<History> history);
+  int size();
+  void set_translation(int index, std::string);
+  bool cancelled();
 };
+
 }  // namespace bergamot
 }  // namespace marian

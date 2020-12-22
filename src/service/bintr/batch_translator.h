@@ -14,6 +14,7 @@
 #include "data/text_input.h"
 #include "translator/history.h"
 #include "translator/scorers.h"
+#include "definitions.h"
 
 extern Logger logger;
 
@@ -31,7 +32,7 @@ class BatchTranslator {
   Ptr<data::ShortlistGenerator const> slgen_;
 
  public:
-  BatchTranslator() { std::cerr << "TODO(jerin): Fix bad constructor\n"; };
+  BatchTranslator() { std::cerr << "TODO(jerin): Fix bad constructor\n"; }
   BatchTranslator(const BatchTranslator &) = default;
   BatchTranslator(DeviceId const device, std::vector<Ptr<Vocab const>> vocabs,
                   /* std::function<void(Ptr<History const>)> callback,*/
@@ -79,7 +80,7 @@ class BatchTranslator {
   marian::Ptr<data::CorpusBatch> construct_batch(
       const std::vector<data::SentenceTuple> &);
   marian::Ptr<data::CorpusBatch> construct_batch_from_segments(
-      const Ptr<std::vector<Words>>);
+      const Ptr<Segments>);
 };
 }  // namespace bergamot
 }  // namespace marian

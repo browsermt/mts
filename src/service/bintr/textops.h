@@ -10,6 +10,9 @@
 #include "data/sentencepiece_vocab.h"
 #include "definitions.h"
 
+#include <string>
+#include <vector>
+
 namespace marian {
 namespace bergamot {
 
@@ -23,9 +26,7 @@ class SentenceSplitter {
   ug::ssplit::SentenceStream::splitmode string2splitmode(const std::string &m);
 
  public:
-
-  // Constructor
-  SentenceSplitter(Ptr<Options> options);
+  explicit SentenceSplitter(Ptr<Options> options);
   ug::ssplit::SentenceStream createSentenceStream(string_view const &input);
 };
 
@@ -35,9 +36,9 @@ class Tokenizer {
   std::vector<Ptr<Vocab const>> vocabs_;
   bool inference_;
   bool addEOS_;
-  Tokenizer(Ptr<Options>);
+  explicit Tokenizer(Ptr<Options>);
   std::vector<Ptr<const Vocab>> loadVocabularies(Ptr<Options> options);
-  Segment tokenize(string_view const &snt, Alignments &alignments);
+  Segment tokenize(string_view const &, Alignment &);
 };
 
 class TextProcessor {
@@ -45,10 +46,11 @@ class TextProcessor {
   Tokenizer tokenizer_;
   unsigned int max_input_sentence_tokens_;
   SentenceSplitter sentence_splitter_;
-  TextProcessor(Ptr<Options>);
+  explicit TextProcessor(Ptr<Options>);
 
-  void query_to_segments(const string_view &query, Ptr<Segments>, Ptr<Alignments>);
-
+  void query_to_segments(const string_view &query,
+                        Ptr<Segments>,
+                        Ptr<Alignments>);
 };
 
 }  // namespace bergamot

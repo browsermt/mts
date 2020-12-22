@@ -2,6 +2,7 @@
 #include "sys/time.h"
 #include "request.h"
 #include "data/types.h"
+#include "definitions.h"
 
 namespace marian {
   namespace bergamot {
@@ -13,6 +14,8 @@ namespace marian {
         Ptr<Request> request;
         MultiFactorPriority(int, Ptr<Request>);
         int num_tokens();
+        Segment segment() const;
+        
     };
 
     bool operator<(const MultiFactorPriority& a, const MultiFactorPriority& b);

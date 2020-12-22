@@ -17,7 +17,7 @@ BatchTranslator::BatchTranslator(DeviceId const device,
 }
 
 Ptr<data::CorpusBatch> BatchTranslator::construct_batch_from_segments(
-    const Ptr<std::vector<Words>> segments) {
+    const Ptr<Segments> segments) {
   int id = 0;
   std::vector<data::SentenceTuple> sentence_tuples;
   for (auto &segment : *segments) {

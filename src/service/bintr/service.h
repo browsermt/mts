@@ -16,10 +16,13 @@ class Service {
   Batcher batcher_;
 
  public:
-  Service(Ptr<Options> );
-  std::future<TranslationResult> trivial_translate(string_view &) ;
-  std::future<TranslationResult> queue(string_view &input);
-  std::future<TranslationResult> translate(string_view &input);
+  explicit Service(Ptr<Options>);
+  std::future<TranslationResult> trivial_translate(const string_view &);
+  std::future<TranslationResult> queue(const string_view &input);
+  std::future<TranslationResult> translate(const string_view &input);
+
+  TranslationResult process(Ptr<Segments>, Histories);
+  std::string decode(Ptr<History> history);
 };
 
 }  // namespace bergamot
