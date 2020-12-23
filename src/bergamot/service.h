@@ -1,7 +1,6 @@
 #ifndef __SERVICE_H
 #define __SERVICE_H
 
-#include "translator/beam_search.h"
 #include "data/types.h"
 #include "translation_result.h"
 #include "textops.h"

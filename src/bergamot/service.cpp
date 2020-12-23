@@ -52,8 +52,7 @@ Service::trivial_translate(const string_view &input) {
   std::cout << "Construct batches" << std::endl;
   auto batch = batch_translator_.construct_batch_from_segments(segments);
   std::cout << "Translating" << std::endl;
-  auto histories = batch_translator_.translate_batch
-      <Ptr<data::CorpusBatch>, BeamSearch>(batch);
+  auto histories = batch_translator_.translate_batch(batch);
 
   std::promise<TranslationResult> translation_result_promise;
   auto translation_result = process(segments, histories);
@@ -90,8 +89,7 @@ std::future<TranslationResult> Service::queue(const string_view &input) {
   std::cout << "Construct batches" << std::endl;
   auto batch = batch_translator_.construct_batch_from_segments(batchSegments);
   std::cout << "Translating" << std::endl;
-  auto histories = batch_translator_.translate_batch
-      <Ptr<data::CorpusBatch>, BeamSearch>(batch);
+  auto histories = batch_translator_.translate_batch(batch);
 
   for(int i=0; i < batchSentences->size(); i++){
     Ptr<History> history = histories[i];
@@ -110,6 +108,7 @@ std::future<TranslationResult> Service::translate(const string_view &input) {
   return queue(input);
   // return trivial_translate(input);
 }
+
 
 }  // namespace bergamot
 }  // namespace marian
