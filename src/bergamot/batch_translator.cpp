@@ -5,8 +5,9 @@ namespace bergamot {
 
 BatchTranslator::BatchTranslator(DeviceId const device,
                                  std::vector<Ptr<Vocab const>> vocabs,
+                                 Ptr<PCQueue<PCItem>> pcqueue,
                                  Ptr<Options> options)
-    : device_(device), options_(options), vocabs_(vocabs) {
+    : device_(device), options_(options), vocabs_(vocabs), pcqueue_(pcqueue) {
   if (options_->hasAndNotEmpty("shortlist")) {
     Ptr<data::ShortlistGenerator const> slgen;
     int srcIdx = 0, trgIdx = 1;
@@ -14,6 +15,11 @@ BatchTranslator::BatchTranslator(DeviceId const device,
     slgen_ = New<data::LexicalShortlistGenerator>(
         options_, vocabs_.front(), vocabs_.back(), srcIdx, trgIdx, shared_vcb);
   }
+
+
+  ABORT_IF(thread_ != NULL, "Don't call start on a running worker!");
+  thread_.reset(new std::thread([this]{ this->mainloop(); }));
+
 }
 
 Ptr<data::CorpusBatch> BatchTranslator::construct_batch_from_segments(
@@ -108,6 +114,20 @@ Histories BatchTranslator::translate_batch(Ptr<data::CorpusBatch> batch) {
   // The below repeated for a batch?
   auto histories = search->search(graph_, batch);
   return histories;
+}
+
+Histories BatchTranslator::translate_segments(Ptr<Segments> segments){
+  auto batch = construct_batch_from_segments(segments);
+  return translate_batch(batch);
+}
+
+std::string BatchTranslator::decode(Ptr<History> history){
+    std::string processed_sentence;
+    NBestList onebest = history->nBest(1);
+    Result result = onebest[0];  // Expecting only one result;
+    Words words = std::get<0>(result);
+    processed_sentence = vocabs_.back()->decode(words);
+    return processed_sentence;
 }
 
 }  // namespace bergamot

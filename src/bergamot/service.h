@@ -7,14 +7,17 @@
 #include "batch_translator.h"
 #include "batcher.h"
 #include "multifactor_priority.h"
+#include "pcqueue.h"
 
 namespace marian {
 namespace bergamot {
 
+
 class Service {
   TextProcessor text_processor_;
-  BatchTranslator batch_translator_;
   Batcher batcher_;
+  Ptr<std::vector<Ptr<BatchTranslator>>> workers_;
+  Ptr<PCQueue<PCItem>> pcqueue_;
 
  public:
   explicit Service(Ptr<Options>);

@@ -28,7 +28,8 @@
 
 
 
-namespace util {
+namespace marian {
+namespace bergamot {
 
 /* OS X Maverick and Boost interprocess were doing "Function not implemented."
  * So this is my own wrapper around the mach kernel APIs.
@@ -298,6 +299,7 @@ template <class T> class UnboundedSingleQueue {
     UnboundedSingleQueue &operator=(const UnboundedSingleQueue &) = delete;
 };
 
-} // namespace util
+} // namespace bergamot
+} // namespace marian
 
 #endif // UTIL_PCQUEUE_H

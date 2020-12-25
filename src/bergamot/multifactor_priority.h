@@ -23,7 +23,21 @@ namespace marian {
     bool operator<(const MultiFactorPriority& a, const MultiFactorPriority& b);
     bool operator==(const MultiFactorPriority& a, const MultiFactorPriority& b);
 
+    struct PCItem {
+      Ptr<Segments> segments;
+      Ptr<std::vector<MultiFactorPriority>> sentences;
+      PCItem(): segments(NULL), sentences(NULL) {}
+      PCItem(Ptr<Segments> segments, Ptr<std::vector<MultiFactorPriority>> sentences):
+          segments(segments), sentences(sentences){}
+
+      void operator=(const PCItem &b){
+        segments = b.segments;
+        sentences = b.sentences;
+      }
+    };
+
   }
+
 }
 
 #endif // __BERGAMOT_MULTIFACTOR_PRIORITY_H

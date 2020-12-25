@@ -7,9 +7,23 @@ namespace bergamot {
 
 Service::Service(Ptr<Options> options) :
     text_processor_(options), batcher_(options) {
-  BatchTranslator batch_translator(CPU0, text_processor_.tokenizer_.vocabs_,
-                                   options);
-  batch_translator_ = batch_translator;
+
+  int num_workers = options->get<int>("cpu-threads");
+  pcqueue_ = New<PCQueue<PCItem>>(10*num_workers);
+
+  workers_ = New<std::vector<Ptr<BatchTranslator>>>();
+  workers_->reserve(num_workers);
+
+  for(int i=0; i < num_workers; i++){
+    marian::DeviceId deviceId(i, DeviceType::cpu);
+    Ptr<BatchTranslator> batch_translator
+        = New<BatchTranslator>(deviceId, 
+                               text_processor_.tokenizer_.vocabs_, 
+                               pcqueue_,
+                               options);
+    workers_->push_back(batch_translator);
+  }
+
 }
 
 std::string Service::decode(Ptr<History> history){
@@ -47,13 +61,8 @@ Service::trivial_translate(const string_view &input) {
   Ptr<Alignments> alignments
       = New<Alignments>();
   text_processor_.query_to_segments(input, segments, alignments);
-  std::cout << "Segments proc" << std::endl;
-
-  std::cout << "Construct batches" << std::endl;
-  auto batch = batch_translator_.construct_batch_from_segments(segments);
-  std::cout << "Translating" << std::endl;
-  auto histories = batch_translator_.translate_batch(batch);
-
+  // Use first worker.
+  auto histories = workers_->front()->translate_segments(segments);
   std::promise<TranslationResult> translation_result_promise;
   auto translation_result = process(segments, histories);
   translation_result_promise.set_value(translation_result);
@@ -65,43 +74,41 @@ std::future<TranslationResult> Service::queue(const string_view &input) {
   Ptr<Segments> segments = New<Segments>();
   Ptr<Alignments> alignments = New<Alignments>();
 
-  std::cout << "Query to segments"  <<  std::endl;
   text_processor_.query_to_segments(input, segments, alignments);
 
-  std::promise<TranslationResult> translation_result_promise_;
+  Ptr<std::promise<TranslationResult>> translation_result_promise_ 
+      = New<std::promise<TranslationResult>>();
+
+  auto future =  translation_result_promise_->get_future();
   Ptr<Request> request = New<Request>(input,
                                       std::move(segments),
                                       std::move(alignments),
                                       translation_result_promise_);
 
-  std::cout << "Queuing"  <<  std::endl;
   for (int i = 0; i < request->size(); i++) {
     MultiFactorPriority priority(i, request);
     batcher_.addSentenceWithPriority(priority);
   }
 
-  Ptr<Segments> batchSegments = New<Segments>();
-  Ptr<std::vector<MultiFactorPriority>> batchSentences 
-      = New<std::vector<MultiFactorPriority>>();
-
   /* Cleave batch, run translation */
-  batcher_.cleave_batch(batchSegments, batchSentences);
-  std::cout << "Construct batches" << std::endl;
-  auto batch = batch_translator_.construct_batch_from_segments(batchSegments);
-  std::cout << "Translating" << std::endl;
-  auto histories = batch_translator_.translate_batch(batch);
+  Ptr<Segments> batchSegments; 
+  Ptr<std::vector<MultiFactorPriority>> batchSentences;
+  int counter = 0;
+  do {
+    batchSegments = New<Segments>();
+    batchSentences = New<std::vector<MultiFactorPriority>>();
+    batcher_.cleave_batch(batchSegments, batchSentences);
+    if(batchSegments->size() > 0){
+      PCItem pcitem(batchSegments, batchSentences);
+      pcqueue_->Produce(pcitem);
+      ++counter;
+      // std::cerr<<"Batches: " << counter ;
+      // std::cerr<<" size: " << batchSegments->size() << std::endl;
+    }
+  } while (batchSegments->size() > 0);
+  
+  return future;
 
-  for(int i=0; i < batchSentences->size(); i++){
-    Ptr<History> history = histories[i];
-    Ptr<Request> request = (batchSentences->at(i)).request;
-    int index = (batchSentences->at(i)).index;
-    request->set_translation(index, decode(history));
-  }
-
-  // TODO(jerin): remove.
-  request->join();
-
-  return translation_result_promise_.get_future();
 }
 
 std::future<TranslationResult> Service::translate(const string_view &input) {

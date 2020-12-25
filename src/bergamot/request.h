@@ -7,6 +7,7 @@
 #include <future>
 #include "translator/beam_search.h"
 #include <unordered_map>
+#include <mutex>
 
 
 
@@ -15,16 +16,17 @@ namespace bergamot {
 
 struct Request {
   string_view reference_;
-  std::promise<TranslationResult> *response_;
-  Ptr<std::vector<Segment>> segments;
+  Ptr<std::promise<TranslationResult>> response_;
+  Ptr<Segments> segments;
   std::unordered_map<int, std::string> translations;
   Ptr<Alignments> alignments;
   timeval created;
   bool cancelled_;
+  std::mutex update_mutex_;
 
 
   Request(string_view, Ptr<Segments>, Ptr<Alignments>,
-          std::promise<TranslationResult> &);
+          Ptr<std::promise<TranslationResult>> );
   void join();
   void cancel();
   int size();
