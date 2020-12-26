@@ -9,6 +9,8 @@ Service::Service(Ptr<Options> options) :
     text_processor_(options), batcher_(options) {
 
   int num_workers = options->get<int>("cpu-threads");
+
+  // TODO(jerin): Fix hardcode, 10*num_workers
   pcqueue_ = New<PCQueue<PCItem>>(10*num_workers);
 
   workers_ = New<std::vector<Ptr<BatchTranslator>>>();
@@ -102,8 +104,6 @@ std::future<TranslationResult> Service::queue(const string_view &input) {
       PCItem pcitem(batchSegments, batchSentences);
       pcqueue_->Produce(pcitem);
       ++counter;
-      // std::cerr<<"Batches: " << counter ;
-      // std::cerr<<" size: " << batchSegments->size() << std::endl;
     }
   } while (batchSegments->size() > 0);
   

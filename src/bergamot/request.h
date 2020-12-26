@@ -18,8 +18,9 @@ struct Request {
   string_view reference_;
   Ptr<std::promise<TranslationResult>> response_;
   Ptr<Segments> segments;
-  std::unordered_map<int, std::string> translations;
   Ptr<Alignments> alignments;
+  // TODO(jerin): Add words here instead of full ttranslation? 
+  std::unordered_map<int, std::string> translations;
   timeval created;
   bool cancelled_;
   std::mutex update_mutex_;
