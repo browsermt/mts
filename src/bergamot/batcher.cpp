@@ -1,4 +1,5 @@
 #include "batcher.h"
+#include "common/logging.h"
 #include <cassert>
 
 namespace marian {
@@ -29,6 +30,7 @@ void Batcher::cleave_batch(Ptr<Segments> segments,
   int segments_added = 0;
   int current_input_tokens = 0;
   int padded_batch_size = 0;
+  int prev_padded_batch_size;
   for (int i = 0; i < bucket.size(); i++) {
     auto p = bucket[i].begin();
     while ( p != bucket[i].end() ){
@@ -41,8 +43,13 @@ void Batcher::cleave_batch(Ptr<Segments> segments,
         ++p;
         ++segments_added;
         bucket[i].erase(q);
+        prev_padded_batch_size = padded_batch_size;
       }
       else{
+        LOG(info, "New batch generated; {} Segments added;", segments_added);
+        LOG(info, 
+            "padded_batch_size ({}) current_input_tokens({})", 
+            prev_padded_batch_size, current_input_tokens);
         return;
       }
     }

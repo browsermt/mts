@@ -1,3 +1,4 @@
+#include "common/logging.h"
 #include "request.h"
 #include "definitions.h"
 #include "translation_result.h"
@@ -43,6 +44,7 @@ void Request::set_translation(int index, std::string translation) {
       translation_result.translations.push_back(translations[i]);
     
     }
+    LOG(info, "Last translation in. Closing request;");
     response_->set_value(translation_result);
   }
 }

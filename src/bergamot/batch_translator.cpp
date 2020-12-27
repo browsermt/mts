@@ -16,6 +16,22 @@ BatchTranslator::BatchTranslator(DeviceId const device,
         options_, vocabs_.front(), vocabs_.back(), srcIdx, trgIdx, shared_vcb);
   }
 
+  graph_ = New<ExpressionGraph>(true);  // always optimize
+  auto prec =
+      options_->get<std::vector<std::string>>("precision", {"float32"});
+  graph_->setDefaultElementType(typeFromString(prec[0]));
+  graph_->setDevice(device_);
+  graph_->getBackend()->configureDevice(options_);
+  graph_->reserveWorkspaceMB(options_->get<size_t>("workspace"));
+  scorers_ = createScorers(options_);
+  for (auto scorer : scorers_) {
+    // Why aren't these steps part of createScorers?
+    // i.e., createScorers(options_, graph_, shortlistGenerator_) [UG]
+    scorer->init(graph_);
+    if (slgen_) {
+      scorer->setShortlistGenerator(slgen_);
+    }
+  }
 
   ABORT_IF(thread_ != NULL, "Don't call start on a running worker!");
   thread_.reset(new std::thread([this]{ this->mainloop(); }));
@@ -84,22 +100,6 @@ Histories BatchTranslator::translate_batch(Ptr<data::CorpusBatch> batch) {
    */
 
   // TODO(jerin): Confirm The below is one-off, or all time?
-  graph_ = New<ExpressionGraph>(true);  // always optimize
-  auto prec =
-      options_->get<std::vector<std::string>>("precision", {"float32"});
-  graph_->setDefaultElementType(typeFromString(prec[0]));
-  graph_->setDevice(device_);
-  graph_->getBackend()->configureDevice(options_);
-  graph_->reserveWorkspaceMB(options_->get<size_t>("workspace"));
-  scorers_ = createScorers(options_);
-  for (auto scorer : scorers_) {
-    // Why aren't these steps part of createScorers?
-    // i.e., createScorers(options_, graph_, shortlistGenerator_) [UG]
-    scorer->init(graph_);
-    if (slgen_) {
-      scorer->setShortlistGenerator(slgen_);
-    }
-  }
   graph_->forward();
   // Is there a particular reason that graph_->forward() happens after
   // initialization of the scorers? It would improve code readability

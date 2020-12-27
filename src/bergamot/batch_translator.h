@@ -51,12 +51,14 @@ class BatchTranslator {
       const Ptr<Segments>);
   std::string decode(Ptr<History>);
 
+
   Histories translate_segments(Ptr<Segments>);
 
   void mainloop(){
     while(true){
       PCItem pcitem;
       pcqueue_->Consume(pcitem);
+      LOG(info, "Worker {} consuming item; ", device_.no);
       auto histories = translate_segments(pcitem.segments);
       for(int i=0; i < (pcitem.sentences)->size(); i++){
         Ptr<History> history = histories[i];
