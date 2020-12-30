@@ -53,9 +53,13 @@ int main(int argc, char *argv[]) {
   auto options = cp.parseOptions(argc, argv, true);
 
   // Scan a paragraph, queue it.
-  std::string input;
-  std::getline(std::cin, input);
-  std::cout << input << "\n";
+  // std::string input;
+  // std::getline(std::cin, input);
+  // std::cout << input << "\n";
+
+  std::ostringstream std_input; 
+  std_input  << std::cin.rdbuf(); 
+  std::string input = std_input.str();
 
   marian::string_view input_view(input);
 

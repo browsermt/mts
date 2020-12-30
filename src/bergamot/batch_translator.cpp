@@ -10,6 +10,13 @@ BatchTranslator::BatchTranslator(DeviceId const device,
     : device_(device), options_(options), vocabs_(vocabs), 
       pcqueue_(pcqueue) {
 
+
+  ABORT_IF(thread_ != NULL, "Don't call start on a running worker!");
+  thread_.reset(new std::thread([this]{ this->mainloop(); }));
+
+}
+
+void BatchTranslator::initGraph(){
   if (options_->hasAndNotEmpty("shortlist")) {
     Ptr<data::ShortlistGenerator const> slgen;
     int srcIdx = 0, trgIdx = 1;
@@ -34,10 +41,6 @@ BatchTranslator::BatchTranslator(DeviceId const device,
   }
 
   graph_->forward();
-
-  ABORT_IF(thread_ != NULL, "Don't call start on a running worker!");
-  thread_.reset(new std::thread([this]{ this->mainloop(); }));
-
 }
 
 void BatchTranslator::translate(const Ptr<Segments> segments, 
@@ -96,6 +99,7 @@ void BatchTranslator::translate(const Ptr<Segments> segments,
 }
 
 void BatchTranslator::mainloop(){
+  initGraph();
   while(true){
     PCItem pcitem;
     pcqueue_->Consume(pcitem);

@@ -33,6 +33,7 @@ public:
                   Ptr<PCQueue<PCItem>> pcqueue,
                   Ptr<Options> options);
 
+  void initGraph();
   void translate(const Ptr<Segments>, Ptr<Histories>);
   void mainloop();
 
