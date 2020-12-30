@@ -15,6 +15,7 @@ if (COMPILE_BERGAMOT_API)
       bergamot/request.cpp 
       bergamot/service.cpp
       bergamot/batcher.cpp
+      bergamot/utils.cpp
   )
 
   set_target_properties(

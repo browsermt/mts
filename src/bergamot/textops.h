@@ -19,27 +19,25 @@ namespace bergamot {
 
 
 class SentenceSplitter {
-  /* Using this class to hide away ssplit mechanics */
- private:
+public:
+  explicit SentenceSplitter(Ptr<Options> options);
+  ug::ssplit::SentenceStream createSentenceStream(string_view const &input);
+
+private:
   ug::ssplit::SentenceSplitter ssplit_;
   Ptr<Options> options_;
   ug::ssplit::SentenceStream::splitmode mode_;
   ug::ssplit::SentenceStream::splitmode string2splitmode(const std::string &m);
-
- public:
-  explicit SentenceSplitter(Ptr<Options> options);
-  ug::ssplit::SentenceStream createSentenceStream(string_view const &input);
 };
 
-
 class Tokenizer {
- public:
+
+public:
   std::vector<Ptr<Vocab const>> vocabs_;
   bool inference_;
   bool addEOS_;
   explicit Tokenizer(Ptr<Options>);
-  std::vector<Ptr<const Vocab>> loadVocabularies(Ptr<Options> options);
-  Segment tokenize(string_view const &, Alignment &);
+  Segment tokenize(string_view const &, SourceAlignment &);
 };
 
 class TextProcessor {
@@ -48,10 +46,9 @@ class TextProcessor {
   unsigned int max_input_sentence_tokens_;
   SentenceSplitter sentence_splitter_;
   explicit TextProcessor(Ptr<Options>);
-
   void query_to_segments(const string_view &query,
-                        Ptr<Segments>,
-                        Ptr<Alignments>);
+                         Ptr<Segments>,
+                         Ptr<SourceAlignments>);
 };
 
 }  // namespace bergamot

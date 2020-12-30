@@ -3,10 +3,10 @@
 
 #include "data/types.h"
 #include "translation_result.h"
+
 #include "textops.h"
-#include "batch_translator.h"
 #include "batcher.h"
-#include "multifactor_priority.h"
+#include "batch_translator.h"
 #include "pcqueue.h"
 
 namespace marian {
@@ -14,19 +14,17 @@ namespace bergamot {
 
 
 class Service {
-  TextProcessor text_processor_;
-  Batcher batcher_;
-  Ptr<std::vector<Ptr<BatchTranslator>>> workers_;
-  Ptr<PCQueue<PCItem>> pcqueue_;
-
- public:
+public:
   explicit Service(Ptr<Options>);
-  std::future<TranslationResult> trivial_translate(const string_view &);
   std::future<TranslationResult> queue(const string_view &input);
   std::future<TranslationResult> translate(const string_view &input);
 
-  TranslationResult process(Ptr<Segments>, Histories);
-  std::string decode(Ptr<History> history);
+private:
+  std::vector<Ptr<Vocab const>> vocabs_;
+  TextProcessor text_processor_;
+  Batcher batcher_;
+  std::vector<Ptr<BatchTranslator const>> workers_;
+  Ptr<PCQueue<PCItem>> pcqueue_;
 };
 
 }  // namespace bergamot

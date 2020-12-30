@@ -11,11 +11,11 @@ Batcher::Batcher(Ptr<Options> options) {
   max_input_sentence_tokens_ = options->get<int>("max-input-sentence-tokens");
   bucket.reserve(max_input_sentence_tokens_ + 1);
   for(int i=0; i<=max_input_sentence_tokens_; i++){
-    bucket.push_back(std::set<MultiFactorPriority>());
+    bucket.push_back(std::set<RequestSentence>());
   }
 }
 
-void Batcher::addSentenceWithPriority(MultiFactorPriority &priority){
+void Batcher::addSentenceWithPriority(RequestSentence &priority){
   int bucket_id = priority.num_tokens();
   // std::cout << "bucket_id " << bucket_id 
   //     << " max_input_sentence_tokens_ " << max_input_sentence_tokens_ << std::endl;
@@ -25,7 +25,7 @@ void Batcher::addSentenceWithPriority(MultiFactorPriority &priority){
 
 
 void Batcher::cleave_batch(Ptr<Segments> segments, 
-                           Ptr<std::vector<MultiFactorPriority>> sentences) {
+                           Ptr<std::vector<RequestSentence>> sentences) {
   /* Temporary stub, needs improvement this section */
   int segments_added = 0;
   int current_input_tokens = 0;

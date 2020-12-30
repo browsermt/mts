@@ -7,7 +7,9 @@ BatchTranslator::BatchTranslator(DeviceId const device,
                                  std::vector<Ptr<Vocab const>> vocabs,
                                  Ptr<PCQueue<PCItem>> pcqueue,
                                  Ptr<Options> options)
-    : device_(device), options_(options), vocabs_(vocabs), pcqueue_(pcqueue) {
+    : device_(device), options_(options), vocabs_(vocabs), 
+      pcqueue_(pcqueue) {
+
   if (options_->hasAndNotEmpty("shortlist")) {
     Ptr<data::ShortlistGenerator const> slgen;
     int srcIdx = 0, trgIdx = 1;
@@ -25,39 +27,32 @@ BatchTranslator::BatchTranslator(DeviceId const device,
   graph_->reserveWorkspaceMB(options_->get<size_t>("workspace"));
   scorers_ = createScorers(options_);
   for (auto scorer : scorers_) {
-    // Why aren't these steps part of createScorers?
-    // i.e., createScorers(options_, graph_, shortlistGenerator_) [UG]
     scorer->init(graph_);
     if (slgen_) {
       scorer->setShortlistGenerator(slgen_);
     }
   }
 
+  graph_->forward();
+
   ABORT_IF(thread_ != NULL, "Don't call start on a running worker!");
   thread_.reset(new std::thread([this]{ this->mainloop(); }));
 
 }
 
-Ptr<data::CorpusBatch> BatchTranslator::construct_batch_from_segments(
-    const Ptr<Segments> segments) {
+void BatchTranslator::translate(const Ptr<Segments> segments, 
+                                Ptr<Histories> histories){
   int id = 0;
-  std::vector<data::SentenceTuple> sentence_tuples;
+  std::vector<data::SentenceTuple> batchVector;
   for (auto &segment : *segments) {
     data::SentenceTuple sentence_tuple(id);
     sentence_tuple.push_back(segment);
-    sentence_tuples.push_back(sentence_tuple);
+    batchVector.push_back(sentence_tuple);
     id++;
   }
-  return construct_batch(sentence_tuples);
-}
 
-Ptr<data::CorpusBatch> BatchTranslator::construct_batch(
-    const std::vector<data::SentenceTuple> &batchVector) {
-  // TODO(jerin): The following is to fix rest, take off, absolute danger.
   size_t batchSize = batchVector.size();
-
   std::vector<size_t> sentenceIds;
-
   std::vector<int> maxDims;
   for (auto &ex : batchVector) {
     if (maxDims.size() < ex.size()) maxDims.resize(ex.size(), 0);
@@ -86,48 +81,35 @@ Ptr<data::CorpusBatch> BatchTranslator::construct_batch(
     }
   }
 
-  for (size_t j = 0; j < maxDims.size(); ++j) subBatches[j]->setWords(words[j]);
+  for (size_t j = 0; j < maxDims.size(); ++j) 
+    subBatches[j]->setWords(words[j]);
 
   auto batch = Ptr<CorpusBatch>(new CorpusBatch(subBatches));
   batch->setSentenceIds(sentenceIds);
-  return batch;
-}
 
-Histories BatchTranslator::translate_batch(Ptr<data::CorpusBatch> batch) {
-  /* @brief
-   * Run a translation on a batch and issues a callback on each of the
-   * history.
-   */
-
-  // TODO(jerin): Confirm The below is one-off, or all time?
-  graph_->forward();
-  // Is there a particular reason that graph_->forward() happens after
-  // initialization of the scorers? It would improve code readability
-  // to do this before scorer initialization. Logical flow: first
-  // set up graph, then set up scorers. [UG]
-
-  /* Found bundle, callback/history. */
 
   auto trgVocab = vocabs_.back();
   auto search = New<BeamSearch>(options_, scorers_, trgVocab);
 
-  // The below repeated for a batch?
-  auto histories = search->search(graph_, batch);
-  return histories;
+  *histories = std::move(search->search(graph_, batch));
+
 }
 
-Histories BatchTranslator::translate_segments(Ptr<Segments> segments){
-  auto batch = construct_batch_from_segments(segments);
-  return translate_batch(batch);
-}
-
-std::string BatchTranslator::decode(Ptr<History> history){
-    std::string processed_sentence;
-    NBestList onebest = history->nBest(1);
-    Result result = onebest[0];  // Expecting only one result;
-    Words words = std::get<0>(result);
-    processed_sentence = vocabs_.back()->decode(words);
-    return processed_sentence;
+void BatchTranslator::mainloop(){
+  while(true){
+    PCItem pcitem;
+    pcqueue_->Consume(pcitem);
+    LOG(info, "Worker {} consuming item; ", device_.no);
+    Ptr<Histories> histories = New<Histories>();
+    translate(pcitem.segments, histories);
+    for(int i=0; i < (pcitem.sentences)->size(); i++){
+      Ptr<History> history = histories->at(i);
+      Ptr<Request> request = ((pcitem.sentences)->at(i)).request;
+      int index = ((pcitem.sentences)->at(i)).index;
+      request->set_translation(index, history);
+    }
+    LOG(info, "Worker {} processed item; ", device_.no);
+  }
 }
 
 }  // namespace bergamot

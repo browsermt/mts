@@ -18,56 +18,36 @@
 #include "definitions.h"
 #include "translator/beam_search.h"
 #include "pcqueue.h"
-#include "multifactor_priority.h"
+#include "request.h"
 
 extern Logger logger;
 
 namespace marian {
 namespace bergamot {
-class BatchTranslator {
- private:
-  DeviceId device_;
-  std::function<void(Ptr<History const>)> callback_;
-  Ptr<Options> options_;
-  Ptr<ExpressionGraph> graph_;
-  std::vector<Ptr<Vocab const>> vocabs_;
-  std::vector<Ptr<Scorer>> scorers_;
-  Ptr<data::ShortlistGenerator const> slgen_;
-  Ptr<PCQueue<PCItem>> pcqueue_;
-  std::unique_ptr<std::thread> thread_;
 
- public:
+class BatchTranslator {
+public:
   BatchTranslator(const BatchTranslator &) = default;
   BatchTranslator(DeviceId const device, 
                   std::vector<Ptr<Vocab const>> vocabs,
-                  /* std::function<void(Ptr<History const>)> callback,*/
                   Ptr<PCQueue<PCItem>> pcqueue,
                   Ptr<Options> options);
 
-  Histories translate_batch(Ptr<data::CorpusBatch> batch);
-  marian::Ptr<data::CorpusBatch> construct_batch(
-      const std::vector<data::SentenceTuple> &);
-  marian::Ptr<data::CorpusBatch> construct_batch_from_segments(
-      const Ptr<Segments>);
-  std::string decode(Ptr<History>);
+  void translate(const Ptr<Segments>, Ptr<Histories>);
+  void mainloop();
 
 
-  Histories translate_segments(Ptr<Segments>);
+private:
+  Ptr<Options> options_;
 
-  void mainloop(){
-    while(true){
-      PCItem pcitem;
-      pcqueue_->Consume(pcitem);
-      LOG(info, "Worker {} consuming item; ", device_.no);
-      auto histories = translate_segments(pcitem.segments);
-      for(int i=0; i < (pcitem.sentences)->size(); i++){
-        Ptr<History> history = histories[i];
-        Ptr<Request> request = ((pcitem.sentences)->at(i)).request;
-        int index = ((pcitem.sentences)->at(i)).index;
-        request->set_translation(index, decode(history));
-      }
-    }
-  }
+  DeviceId device_;
+  std::vector<Ptr<Vocab const>> vocabs_;
+  Ptr<ExpressionGraph> graph_;
+  std::vector<Ptr<Scorer>> scorers_;
+  Ptr<data::ShortlistGenerator const> slgen_;
+
+  Ptr<PCQueue<PCItem>> pcqueue_;
+  std::unique_ptr<std::thread> thread_;
 
 };
 }  // namespace bergamot
