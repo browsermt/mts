@@ -1,4 +1,5 @@
 #include "batch_translator.h"
+#include "timer.h"
 
 namespace marian {
 namespace bergamot {
@@ -47,6 +48,8 @@ void BatchTranslator::translate(const Ptr<Segments> segments,
                                 Ptr<Histories> histories){
   int id = 0;
   std::vector<data::SentenceTuple> batchVector;
+  Timer timer;
+
   for (auto &segment : *segments) {
     data::SentenceTuple sentence_tuple(id);
     sentence_tuple.push_back(segment);
@@ -54,6 +57,8 @@ void BatchTranslator::translate(const Ptr<Segments> segments,
     id++;
   }
 
+  LOG(info, "Worker {} batchVector created in {}; ", device_.no, timer.elapsed());
+  timer.reset();
   size_t batchSize = batchVector.size();
   std::vector<size_t> sentenceIds;
   std::vector<int> maxDims;
@@ -73,6 +78,10 @@ void BatchTranslator::translate(const Ptr<Segments> segments,
     subBatches.emplace_back(New<SubBatch>(batchSize, maxDims[j], vocabs_[j]));
   }
 
+
+  LOG(info, "Worker {} subBatches created in {}; ", device_.no, timer.elapsed());
+  timer.reset();
+
   std::vector<size_t> words(maxDims.size(), 0);
   for (size_t i = 0; i < batchSize; ++i) {
     for (size_t j = 0; j < maxDims.size(); ++j) {
@@ -89,23 +98,32 @@ void BatchTranslator::translate(const Ptr<Segments> segments,
 
   auto batch = Ptr<CorpusBatch>(new CorpusBatch(subBatches));
   batch->setSentenceIds(sentenceIds);
+  LOG(info, "Worker {} corpusBatch created in {}; ", device_.no, timer.elapsed());
+  timer.reset();
+
 
 
   auto trgVocab = vocabs_.back();
   auto search = New<BeamSearch>(options_, scorers_, trgVocab);
 
   *histories = std::move(search->search(graph_, batch));
+  LOG(info, "Worker {} BeamSearch completed in {}; ", device_.no, timer.elapsed());
+  timer.reset();
 
 }
 
 void BatchTranslator::mainloop(){
   initGraph();
   while(true){
+    Timer timer;
     PCItem pcitem;
     pcqueue_->Consume(pcitem);
-    LOG(info, "Worker {} consuming item; ", device_.no);
+    LOG(info, "Worker {} consumed item in {}; ", device_.no, timer.elapsed());
+    timer.reset();
     Ptr<Histories> histories = New<Histories>();
     translate(pcitem.segments, histories);
+    LOG(info, "Worker {} translated item in {}; ", device_.no, timer.elapsed());
+    timer.reset();
     for(int i=0; i < (pcitem.sentences)->size(); i++){
       Ptr<History> history = histories->at(i);
       Ptr<Request> request = ((pcitem.sentences)->at(i)).request;
