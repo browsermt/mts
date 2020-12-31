@@ -1,5 +1,6 @@
 #include "batcher.h"
 #include "common/logging.h"
+#include "sanelogging.h"
 #include <cassert>
 
 namespace marian {
@@ -46,8 +47,8 @@ void Batcher::cleave_batch(Ptr<Segments> segments,
         prev_padded_batch_size = padded_batch_size;
       }
       else{
-        LOG(info, "New batch generated; {} Segments added;", segments_added);
-        LOG(info, 
+        PLOG("main", info, "New batch generated; {} Segments added;", segments_added);
+        PLOG("main", info, 
             "padded_batch_size ({}) current_input_tokens({})", 
             prev_padded_batch_size, current_input_tokens);
         return;

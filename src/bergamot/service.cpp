@@ -7,7 +7,8 @@ namespace marian {
 namespace bergamot {
 
 Service::Service(Ptr<Options> options) :
-    text_processor_(options), batcher_(options) {
+    text_processor_(options), batcher_(options), 
+    timeout_(options->get<int>("queue-timeout")) {
 
   int num_workers = options->get<int>("cpu-threads");
 
@@ -15,7 +16,7 @@ Service::Service(Ptr<Options> options) :
   vocabs_ = loadVocabularies(options);
 
   // @TODO(jerin): Fix hardcode, 100*num_workers
-  pcqueue_ = New<PCQueue<PCItem>>(100*num_workers);
+  pcqueue_ = New<Queue<PCItem>>(100*num_workers);
 
   // workers_ = New<std::vector<Ptr<BatchTranslator>>>();
   workers_.reserve(num_workers);
@@ -62,9 +63,9 @@ std::future<TranslationResult> Service::queue(const string_view &input) {
 
     if(batchSegments->size() > 0){
       PCItem pcitem(batchSegments, batchSentences);
-      pcqueue_->Produce(pcitem);
+      pcqueue_->push(pcitem, timeout_);
       ++counter;
-      LOG(info, "Batch {} generated", counter);
+      PLOG("main", info, "Batch {} generated", counter);
     }
   } while (batchSegments->size() > 0);
   
@@ -75,6 +76,17 @@ std::future<TranslationResult> Service::queue(const string_view &input) {
 std::future<TranslationResult> 
 Service::translate(const string_view &input) {
   return queue(input);
+}
+
+void Service::stop(){
+  int counter = 0;
+  for(auto &worker: workers_){
+    PLOG("main", info, "Stopping worker {}", counter);
+    worker->stop();
+    PLOG("main", info, "Stopped worker {}", counter);
+    worker->join();
+    PLOG("main", info, "Stopped worker {}", counter);
+  }
 }
 
 

@@ -63,6 +63,13 @@ struct PCItem {
     segments = b.segments;
     sentences = b.sentences;
   }
+
+  /*
+  PCItem(PCItem &&b){
+    segments = std::move(b.segments);
+    sentences = std::move(b.sentences);
+  }
+  */
 };
 
 

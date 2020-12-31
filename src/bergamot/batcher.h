@@ -6,7 +6,6 @@
 #include "definitions.h"
 #include "request.h"
 
-#include <queue>
 #include <vector>
 #include <set>
 

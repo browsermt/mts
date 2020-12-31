@@ -6,10 +6,11 @@ namespace bergamot {
 
 BatchTranslator::BatchTranslator(DeviceId const device,
                                  std::vector<Ptr<Vocab const>> vocabs,
-                                 Ptr<PCQueue<PCItem>> pcqueue,
+                                 Ptr<Queue<PCItem>> pcqueue,
                                  Ptr<Options> options)
     : device_(device), options_(options), vocabs_(vocabs), 
-      pcqueue_(pcqueue) {
+      pcqueue_(pcqueue), timeout_(options_->get<int>("queue-timeout")) {
+
 
 
   ABORT_IF(thread_ != NULL, "Don't call start on a running worker!");
@@ -57,7 +58,7 @@ void BatchTranslator::translate(const Ptr<Segments> segments,
     id++;
   }
 
-  LOG(info, "Worker {} batchVector created in {}; ", device_.no, timer.elapsed());
+  PLOG(_identifier(), info, "batchVector created in {}; ", timer.elapsed());
   timer.reset();
   size_t batchSize = batchVector.size();
   std::vector<size_t> sentenceIds;
@@ -79,7 +80,7 @@ void BatchTranslator::translate(const Ptr<Segments> segments,
   }
 
 
-  LOG(info, "Worker {} subBatches created in {}; ", device_.no, timer.elapsed());
+  PLOG(_identifier(), info, "subBatches created in {}; ", timer.elapsed());
   timer.reset();
 
   std::vector<size_t> words(maxDims.size(), 0);
@@ -98,39 +99,41 @@ void BatchTranslator::translate(const Ptr<Segments> segments,
 
   auto batch = Ptr<CorpusBatch>(new CorpusBatch(subBatches));
   batch->setSentenceIds(sentenceIds);
-  LOG(info, "Worker {} corpusBatch created in {}; ", device_.no, timer.elapsed());
+  PLOG(_identifier(), info, "corpusBatch created in {}; ", timer.elapsed());
   timer.reset();
 
 
 
   auto trgVocab = vocabs_.back();
   auto search = New<BeamSearch>(options_, scorers_, trgVocab);
+  auto histories_ = search->search(graph_, batch);
+  PLOG(_identifier(), info, "BeamSearch completed in {}; ", timer.elapsed());
 
-  *histories = std::move(search->search(graph_, batch));
-  LOG(info, "Worker {} BeamSearch completed in {}; ", device_.no, timer.elapsed());
+  *histories = std::move(histories_);
   timer.reset();
 
 }
 
 void BatchTranslator::mainloop(){
   initGraph();
-  while(true){
+  while(running_){
     Timer timer;
     PCItem pcitem;
-    pcqueue_->Consume(pcitem);
-    LOG(info, "Worker {} consumed item in {}; ", device_.no, timer.elapsed());
-    timer.reset();
-    Ptr<Histories> histories = New<Histories>();
-    translate(pcitem.segments, histories);
-    LOG(info, "Worker {} translated item in {}; ", device_.no, timer.elapsed());
-    timer.reset();
-    for(int i=0; i < (pcitem.sentences)->size(); i++){
-      Ptr<History> history = histories->at(i);
-      Ptr<Request> request = ((pcitem.sentences)->at(i)).request;
-      int index = ((pcitem.sentences)->at(i)).index;
-      request->set_translation(index, history);
+    QUEUE_STATUS_CODE status = pcqueue_->pop(pcitem);
+    if(status == QUEUE_STATUS_CODE::SUCCESS){
+      PLOG(_identifier(), info, "consumed item in {}; ", timer.elapsed());
+      timer.reset();
+      Ptr<Histories> histories = New<Histories>();
+      translate(pcitem.segments, histories);
+      PLOG(_identifier(), info, "translated item in {}; ", timer.elapsed());
+      timer.reset();
+      for(int i=0; i < (pcitem.sentences)->size(); i++){
+        Ptr<History> history = histories->at(i);
+        Ptr<Request> request = ((pcitem.sentences)->at(i)).request;
+        int index = ((pcitem.sentences)->at(i)).index;
+        request->set_translation(index, history);
+      }
     }
-    LOG(info, "Worker {} processed item; ", device_.no);
   }
 }
 

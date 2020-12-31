@@ -7,7 +7,7 @@
 #include "textops.h"
 #include "batcher.h"
 #include "batch_translator.h"
-#include "pcqueue.h"
+#include "queue.h"
 
 namespace marian {
 namespace bergamot {
@@ -18,13 +18,15 @@ public:
   explicit Service(Ptr<Options>);
   std::future<TranslationResult> queue(const string_view &input);
   std::future<TranslationResult> translate(const string_view &input);
+  void stop();
 
 private:
   std::vector<Ptr<Vocab const>> vocabs_;
   TextProcessor text_processor_;
   Batcher batcher_;
-  std::vector<Ptr<BatchTranslator const>> workers_;
-  Ptr<PCQueue<PCItem>> pcqueue_;
+  std::vector<Ptr<BatchTranslator>> workers_;
+  Ptr<Queue<PCItem>> pcqueue_;
+  timeout_t timeout_;
 };
 
 }  // namespace bergamot
