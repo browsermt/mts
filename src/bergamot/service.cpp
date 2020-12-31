@@ -63,7 +63,8 @@ std::future<TranslationResult> Service::queue(const string_view &input) {
 
     if(batchSegments->size() > 0){
       PCItem pcitem(batchSegments, batchSentences);
-      pcqueue_->push(pcitem, timeout_);
+      // pcqueue_->push(pcitem, timeout_);
+      pcqueue_->push(pcitem);
       ++counter;
       PLOG("main", info, "Batch {} generated", counter);
     }
@@ -84,8 +85,15 @@ void Service::stop(){
     PLOG("main", info, "Stopping worker {}", counter);
     worker->stop();
     PLOG("main", info, "Stopped worker {}", counter);
+    ++counter;
+  }
+
+  counter = 0;
+  for(auto &worker: workers_){
+    PLOG("main", info, "Joining worker {}", counter);
     worker->join();
-    PLOG("main", info, "Stopped worker {}", counter);
+    PLOG("main", info, "Joining worker {}", counter);
+    ++counter;
   }
 }
 

@@ -35,7 +35,8 @@ void checkedPLog(std::string logger, std::string level, Args... args){
   else {
     log->warn("Unknown log level '{}' for logger '{}'", level, logger);
   }
-  log->flush();
+  // Not required when threads clean-exit.
+  // log->flush();
 
 }
 

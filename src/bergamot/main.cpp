@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
   cp.addOption<int>("--queue-timeout", "Server Options",
                     "max wait time (in ms) for new data before an underfull "
                     "batch is launched",
-                    100);
+                    10);
   cp.addOption<size_t>(
       "--max-workers", "Bergamot Options",
       "Maximum number of worker threads to deploy when using CPU.",
