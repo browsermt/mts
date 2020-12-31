@@ -119,7 +119,7 @@ void BatchTranslator::mainloop(){
   while(running_){
     Timer timer;
     PCItem pcitem;
-    QUEUE_STATUS_CODE status = pcqueue_->pop(pcitem);
+    QUEUE_STATUS_CODE status = pcqueue_->pop(pcitem, timeout_);
     if(status == QUEUE_STATUS_CODE::SUCCESS){
       PLOG(_identifier(), info, "consumed item in {}; ", timer.elapsed());
       timer.reset();
