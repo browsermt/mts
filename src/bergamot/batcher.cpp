@@ -16,17 +16,15 @@ Batcher::Batcher(Ptr<Options> options) {
   }
 }
 
-void Batcher::addSentenceWithPriority(RequestSentence &priority){
-  int bucket_id = priority.num_tokens();
-  // std::cout << "bucket_id " << bucket_id 
-  //     << " max_input_sentence_tokens_ " << max_input_sentence_tokens_ << std::endl;
+void Batcher::addSentenceWithPriority(RequestSentence &sentence){
+  int bucket_id = sentence.num_tokens();
   assert(bucket_id <= max_input_sentence_tokens_);
-  bucket[bucket_id].insert(priority);
+  bucket[bucket_id].insert(sentence);
 }
 
 
 void Batcher::cleave_batch(Ptr<Segments> segments, 
-                           Ptr<std::vector<RequestSentence>> sentences) {
+                           Ptr<RequestSentences> sentences) {
   /* Temporary stub, needs improvement this section */
   int segments_added = 0;
   int current_input_tokens = 0;
