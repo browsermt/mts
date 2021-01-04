@@ -27,7 +27,7 @@ option(UPDATE_SUBMODULES "Check for changes in submodules" ON)
 option(USE_CCACHE "Use ccache compiler cache (https://ccache.dev)" ON)
 option(USE_CUDNN "Use CUDNN library" OFF)
 option(USE_DOXYGEN "Build documentation with Doxygen" OFF)
-option(USE_FBGEMM "Use FBGEMM" ON)
+option(USE_FBGEMM "Use FBGEMM" OFF)
 option(USE_MKL "Compile with MKL support" ON)
 option(USE_MPI "Use MPI library" OFF)
 option(USE_NCCL "Use NCCL library" OFF)
@@ -80,6 +80,10 @@ endif(COMPILE_CUDA)
 if(USE_CUDNN)
   find_package(CUDNN "7.0")
 endif(USE_CUDNN)
+
+# Profile for target main
+set(CMAKE_CXX_FLAGS_PROFILE         "${CMAKE_CXX_FLAGS_RELEASE} -pg")
+set(CMAKE_C_FLAGS_PROFILE         "${CMAKE_C_FLAGS_RELEASE} -pg")
 
 add_subdirectory(src)
 
