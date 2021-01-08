@@ -1,14 +1,14 @@
 #include "batch_translator.h"
 #include "timer.h"
+#include "utils.h"
 
 namespace marian {
 namespace bergamot {
 
 BatchTranslator::BatchTranslator(DeviceId const device,
-                                 std::vector<Ptr<Vocab const>> vocabs,
                                  Ptr<Queue<PCItem>> pcqueue,
                                  Ptr<Options> options)
-    : device_(device), options_(options), vocabs_(vocabs), 
+    : device_(device), options_(options), 
       pcqueue_(pcqueue), timeout_(options_->get<int>("queue-timeout")) {
 
 
@@ -19,6 +19,7 @@ BatchTranslator::BatchTranslator(DeviceId const device,
 }
 
 void BatchTranslator::initGraph(){
+  vocabs_ = loadVocabularies(options_);
   if (options_->hasAndNotEmpty("shortlist")) {
     Ptr<data::ShortlistGenerator const> slgen;
     int srcIdx = 0, trgIdx = 1;

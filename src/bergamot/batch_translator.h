@@ -30,7 +30,6 @@ class BatchTranslator {
 public:
   BatchTranslator(const BatchTranslator &) = default;
   BatchTranslator(DeviceId const device, 
-                  std::vector<Ptr<Vocab const>> vocabs,
                   Ptr<Queue<PCItem>> pcqueue,
                   Ptr<Options> options);
 

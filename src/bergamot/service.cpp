@@ -24,7 +24,7 @@ Service::Service(Ptr<Options> options) :
   for(int i=0; i < num_workers; i++){
     marian::DeviceId deviceId(i, DeviceType::cpu);
     Ptr<BatchTranslator> batch_translator
-        = New<BatchTranslator>(deviceId, vocabs_,  pcqueue_, options);
+        = New<BatchTranslator>(deviceId, pcqueue_, options);
     workers_.push_back(std::move(batch_translator));
   }
 }
@@ -34,6 +34,10 @@ std::future<TranslationResult> Service::queue(const string_view &input) {
   Ptr<Segments> segments = New<Segments>();
   Ptr<SourceAlignments> sourceAlignments = New<SourceAlignments>();
   text_processor_.query_to_segments(input, segments, sourceAlignments);
+
+  for(auto &segment: *segments){
+      PLOG("main", info, "[token-size {}]", ((int)segment.size()));
+  }
 
   Ptr<std::promise<TranslationResult>> 
       translationResultPromise = New<std::promise<TranslationResult>>();
@@ -96,7 +100,6 @@ void Service::stop(){
     ++counter;
   }
 }
-
 
 }  // namespace bergamot
 }  // namespace marian
