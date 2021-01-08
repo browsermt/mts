@@ -7,7 +7,7 @@
 #include "definitions.h"
 #include <future>
 #include "translator/beam_search.h"
-#include <unordered_map>
+#include <vector>
 #include <mutex>
 
 
@@ -21,8 +21,8 @@ struct Request {
   Ptr<SourceAlignments> sourceAlignments;
   Ptr<std::promise<TranslationResult>> response_;
   timeval created;
-  std::mutex update_mutex_;
-  std::unordered_map<int, Ptr<History>> translations;
+  std::vector<Ptr<History>> histories_;
+  std::atomic<int> counter_;
 
 
   // @TODO(jerin): This is a bit weird, need to do better.
@@ -68,12 +68,6 @@ struct PCItem {
       return (segments == NULL);
   }
 
-  /*
-  PCItem(PCItem &&b){
-    segments = std::move(b.segments);
-    sentences = std::move(b.sentences);
-  }
-  */
 };
 
 

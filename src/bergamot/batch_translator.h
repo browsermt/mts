@@ -37,6 +37,7 @@ public:
   void translate(const Ptr<Segments>, Ptr<Histories>);
   void mainloop();
   std::string _identifier() { return "worker" + std::to_string(device_.no); }
+  void join();
   void join(){
      thread_->join(); 
      thread_.reset(); 
@@ -50,7 +51,7 @@ private:
   Ptr<ExpressionGraph> graph_;
   std::vector<Ptr<Scorer>> scorers_;
   Ptr<data::ShortlistGenerator const> slgen_;
-  std::atomic<bool> running_{true};
+  bool running_{true};
 
   Ptr<PCQueue<PCItem>> pcqueue_;
   std::unique_ptr<std::thread> thread_;

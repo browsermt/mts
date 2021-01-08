@@ -139,5 +139,10 @@ void BatchTranslator::mainloop(){
   }
 }
 
+void BatchTranslator::join(){
+ thread_->join(); 
+ thread_.reset(); 
+}
+
 }  // namespace bergamot
 }  // namespace marian

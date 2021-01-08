@@ -16,10 +16,14 @@ Request::Request(std::vector<Ptr<Vocab const>> vocabs,
     : vocabs_(vocabs), reference_(reference), 
       segments(segments),
       sourceAlignments(sourceAlignments),
-      response_(translationResultPromise) {
+      response_(translationResultPromise), 
+      counter_(segments->size()) {
 
       struct timezone *tz = NULL;
       gettimeofday(&created, tz);
+      for(int i=0; i < segments->size(); i++){
+          histories_.push_back(nullptr);
+      }
 
 }
 
@@ -29,17 +33,18 @@ int Request::size(){
 
 void Request::set_translation(int index, Ptr<History> history) {
   /* This can be accessed by multiple batch_translators at once. */
-  std::lock_guard<std::mutex> request_lock(update_mutex_);
-  translations[index] = history;
+  // std::lock_guard<std::mutex> request_lock(update_mutex_);
+  histories_[index] = history;
+  --counter_;
 
-  if(translations.size() == segments->size()){
+  if(counter_ == 0){
     TranslationResult translation_result;
     for(int i=0; i < segments->size(); i++){
       translation_result.sources.push_back(
           vocabs_.front()->decode(segments->at(i))
       );
 
-      history = translations[i];
+      history = histories_[i];
       NBestList onebest = history->nBest(1);
       Result result = onebest[0];  // Expecting only one result;
       Words words = std::get<0>(result);
