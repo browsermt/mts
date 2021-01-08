@@ -18,6 +18,10 @@ function bergamot {
     set -x;
     BERGAMOT_ARGS=(
         "${COMMON_ARGS[@]}"
+        --cpu-threads 5
+        --log-level all
+        --max-input-sentence-tokens 128
+        --max-input-tokens 2048
     )
     ./main ${BERGAMOT_ARGS[@]};
     set +x;
