@@ -64,6 +64,10 @@ struct PCItem {
     sentences = b.sentences;
   }
 
+  bool isPoison(){
+      return (segments == NULL);
+  }
+
   /*
   PCItem(PCItem &&b){
     segments = std::move(b.segments);

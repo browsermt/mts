@@ -18,7 +18,7 @@
 #include "translator/scorers.h"
 #include "definitions.h"
 #include "translator/beam_search.h"
-#include "queue.h"
+#include "pcqueue.h"
 #include "request.h"
 
 #include "sanelogging.h"
@@ -30,21 +30,16 @@ class BatchTranslator {
 public:
   BatchTranslator(const BatchTranslator &) = default;
   BatchTranslator(DeviceId const device, 
-                  Ptr<Queue<PCItem>> pcqueue,
+                  Ptr<PCQueue<PCItem>> pcqueue,
                   Ptr<Options> options);
 
   void initGraph();
   void translate(const Ptr<Segments>, Ptr<Histories>);
   void mainloop();
   std::string _identifier() { return "worker" + std::to_string(device_.no); }
-  void stop(){ running_ = false; }
-  void join(){ 
-    PLOG(_identifier(), info, "calling join");
-    thread_->join(); 
-    PLOG(_identifier(), info, "joined");
-    PLOG(_identifier(), info, "calling reset");
-    thread_.reset(); 
-    PLOG(_identifier(), info, "reset");
+  void join(){
+     thread_->join(); 
+     thread_.reset(); 
   }
 
 
@@ -57,9 +52,8 @@ private:
   Ptr<data::ShortlistGenerator const> slgen_;
   std::atomic<bool> running_{true};
 
-  Ptr<Queue<PCItem>> pcqueue_;
+  Ptr<PCQueue<PCItem>> pcqueue_;
   std::unique_ptr<std::thread> thread_;
-  timeout_t timeout_;
 
 };
 }  // namespace bergamot

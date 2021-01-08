@@ -6,10 +6,9 @@ namespace marian {
 namespace bergamot {
 
 BatchTranslator::BatchTranslator(DeviceId const device,
-                                 Ptr<Queue<PCItem>> pcqueue,
+                                 Ptr<PCQueue<PCItem>> pcqueue,
                                  Ptr<Options> options)
-    : device_(device), options_(options), 
-      pcqueue_(pcqueue), timeout_(options_->get<int>("queue-timeout")) {
+    : device_(device), options_(options), pcqueue_(pcqueue) {
 
 
 
@@ -120,8 +119,10 @@ void BatchTranslator::mainloop(){
   while(running_){
     Timer timer;
     PCItem pcitem;
-    QUEUE_STATUS_CODE status = pcqueue_->pop(pcitem, timeout_);
-    if(status == QUEUE_STATUS_CODE::SUCCESS){
+    pcqueue_->Consume(pcitem);
+    if(pcitem.isPoison()){
+        running_ = false;
+    } else {
       PLOG(_identifier(), info, "consumed item in {}; ", timer.elapsed());
       timer.reset();
       Ptr<Histories> histories = New<Histories>();
