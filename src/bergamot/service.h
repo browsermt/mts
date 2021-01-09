@@ -28,6 +28,7 @@ private:
   UPtr<PCQueue<PCItem>> pcqueue_;
   std::vector<UPtr<BatchTranslator>> workers_;
   bool running_;
+  unsigned int requestId_;
 };
 
 }  // namespace bergamot

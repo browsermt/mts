@@ -6,8 +6,11 @@
 namespace marian {
 namespace bergamot {
 
-Service::Service(Ptr<Options> options) :
-    text_processor_(options), batcher_(options), running_(true) {
+Service::Service(Ptr<Options> options) 
+    : text_processor_(options), 
+      batcher_(options), 
+      running_(true), 
+      requestId_(0) {
 
   int num_workers = options->get<int>("cpu-threads");
 
@@ -30,6 +33,8 @@ Service::Service(Ptr<Options> options) :
 
 std::future<TranslationResult> Service::queue(const string_view &input) {
   // @TODO(jerin): Place a queue to keep track of requests here.
+  
+
   Ptr<Segments> segments = New<Segments>();
   Ptr<SourceAlignments> sourceAlignments = New<SourceAlignments>();
   text_processor_.query_to_segments(input, segments, sourceAlignments);
@@ -42,7 +47,8 @@ std::future<TranslationResult> Service::queue(const string_view &input) {
       translationResultPromise = New<std::promise<TranslationResult>>();
   auto future = translationResultPromise->get_future();
 
-  Ptr<Request> request = New<Request>(vocabs_, 
+  Ptr<Request> request = New<Request>(requestId_++,
+                                      vocabs_, 
                                       input,
                                       std::move(segments),
                                       std::move(sourceAlignments),

@@ -8,19 +8,19 @@
 namespace marian {
 namespace bergamot {
 
-Request::Request(std::vector<Ptr<Vocab const>> vocabs,
+Request::Request(unsigned int Id, 
+                 std::vector<Ptr<Vocab const>> vocabs,
                  string_view reference,
                  Ptr<Segments> segments,
                  Ptr<SourceAlignments> sourceAlignments,
                  Ptr<std::promise<TranslationResult>> translationResultPromise)
-    : vocabs_(vocabs), reference_(reference), 
+    : Id(Id),
+      vocabs_(vocabs), reference_(reference), 
       segments(segments),
       sourceAlignments(sourceAlignments),
       response_(translationResultPromise), 
       counter_(segments->size()) {
 
-      struct timezone *tz = NULL;
-      gettimeofday(&created, tz);
       for(int i=0; i < segments->size(); i++){
           histories_.push_back(nullptr);
       }
@@ -37,7 +37,7 @@ void Request::set_translation(int index, Ptr<History> history) {
   histories_[index] = history;
   --counter_;
 
-  if(counter_ == 0){
+  if(--counter_){
     TranslationResult translation_result;
     for(int i=0; i < segments->size(); i++){
       translation_result.sources.push_back(
@@ -60,7 +60,7 @@ void Request::set_translation(int index, Ptr<History> history) {
 
 bool operator<(const Request &a, const Request &b) {
   // TODO(jerin): Probably enhance
-  return a.created.tv_sec < b.created.tv_sec;
+  return a.Id < b.Id;
 }
 
 RequestSentence::RequestSentence(int index, 

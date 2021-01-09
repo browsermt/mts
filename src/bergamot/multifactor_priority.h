@@ -10,10 +10,10 @@ namespace marian {
 
     struct MultiFactorPriority {
       int nice; /* user configurable priority, at a request */
-      timeval created; 
+      unsigned int Id;
       /* What else should priority depend on? */
       double priority(){
-        return 1.0;
+        return Id;
       }
     };
   }

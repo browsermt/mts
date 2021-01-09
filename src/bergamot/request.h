@@ -20,7 +20,7 @@ struct Request {
   Ptr<Segments> segments;
   Ptr<SourceAlignments> sourceAlignments;
   Ptr<std::promise<TranslationResult>> response_;
-  timeval created;
+  unsigned int Id;
   std::vector<Ptr<History>> histories_;
   std::atomic<int> counter_;
 
@@ -28,7 +28,8 @@ struct Request {
   // @TODO(jerin): This is a bit weird, need to do better.
   std::vector<Ptr<Vocab const>> vocabs_; 
 
-  Request(std::vector<Ptr<Vocab const>>,
+  Request(unsigned int,
+          std::vector<Ptr<Vocab const>>,
           string_view, 
           Ptr<Segments>, 
           Ptr<SourceAlignments>,
