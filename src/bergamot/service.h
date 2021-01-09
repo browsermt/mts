@@ -19,13 +19,15 @@ public:
   std::future<TranslationResult> queue(const string_view &input);
   std::future<TranslationResult> translate(const string_view &input);
   void stop();
+  ~Service();
 
 private:
   std::vector<Ptr<Vocab const>> vocabs_;
   TextProcessor text_processor_;
   Batcher batcher_;
-  std::vector<Ptr<BatchTranslator>> workers_;
-  Ptr<PCQueue<PCItem>> pcqueue_;
+  UPtr<PCQueue<PCItem>> pcqueue_;
+  std::vector<UPtr<BatchTranslator>> workers_;
+  bool running_;
 };
 
 }  // namespace bergamot

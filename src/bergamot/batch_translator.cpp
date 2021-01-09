@@ -6,14 +6,14 @@ namespace marian {
 namespace bergamot {
 
 BatchTranslator::BatchTranslator(DeviceId const device,
-                                 Ptr<PCQueue<PCItem>> pcqueue,
+                                 PCQueue<PCItem> *pcqueue,
                                  Ptr<Options> options)
-    : device_(device), options_(options), pcqueue_(pcqueue) {
+    : device_(device), options_(options){
 
 
 
   ABORT_IF(thread_ != NULL, "Don't call start on a running worker!");
-  thread_.reset(new std::thread([this]{ this->mainloop(); }));
+  thread_.reset(new std::thread([&]{ this->mainloop(pcqueue); }));
 
 }
 
@@ -46,7 +46,7 @@ void BatchTranslator::initGraph(){
 }
 
 void BatchTranslator::translate(const Ptr<Segments> segments, 
-                                Ptr<Histories> histories){
+                                Histories &histories){
   int id = 0;
   std::vector<data::SentenceTuple> batchVector;
   Timer timer;
@@ -106,31 +106,31 @@ void BatchTranslator::translate(const Ptr<Segments> segments,
 
   auto trgVocab = vocabs_.back();
   auto search = New<BeamSearch>(options_, scorers_, trgVocab);
-  auto histories_ = search->search(graph_, batch);
+
+  histories = search->search(graph_, batch);
   PLOG(_identifier(), info, "BeamSearch completed in {}; ", timer.elapsed());
 
-  *histories = std::move(histories_);
   timer.reset();
 
 }
 
-void BatchTranslator::mainloop(){
+void BatchTranslator::mainloop(PCQueue<PCItem> *pcqueue){
   initGraph();
   while(running_){
     Timer timer;
     PCItem pcitem;
-    pcqueue_->Consume(pcitem);
+    pcqueue->Consume(pcitem);
     if(pcitem.isPoison()){
         running_ = false;
     } else {
       PLOG(_identifier(), info, "consumed item in {}; ", timer.elapsed());
       timer.reset();
-      Ptr<Histories> histories = New<Histories>();
+      Histories histories;
       translate(pcitem.segments, histories);
       PLOG(_identifier(), info, "translated item in {}; ", timer.elapsed());
       timer.reset();
       for(int i=0; i < (pcitem.sentences)->size(); i++){
-        Ptr<History> history = histories->at(i);
+        Ptr<History> history = histories.at(i);
         Ptr<Request> request = ((pcitem.sentences)->at(i)).request;
         int index = ((pcitem.sentences)->at(i)).index;
         request->set_translation(index, history);

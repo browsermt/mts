@@ -30,18 +30,14 @@ class BatchTranslator {
 public:
   BatchTranslator(const BatchTranslator &) = default;
   BatchTranslator(DeviceId const device, 
-                  Ptr<PCQueue<PCItem>> pcqueue,
+                  PCQueue<PCItem> *pcqueue,
                   Ptr<Options> options);
 
   void initGraph();
-  void translate(const Ptr<Segments>, Ptr<Histories>);
-  void mainloop();
+  void translate(const Ptr<Segments>, Histories &);
+  void mainloop(PCQueue<PCItem> *pcqueue);
   std::string _identifier() { return "worker" + std::to_string(device_.no); }
   void join();
-  void join(){
-     thread_->join(); 
-     thread_.reset(); 
-  }
 
 
 private:
@@ -53,7 +49,6 @@ private:
   Ptr<data::ShortlistGenerator const> slgen_;
   bool running_{true};
 
-  Ptr<PCQueue<PCItem>> pcqueue_;
   std::unique_ptr<std::thread> thread_;
 
 };
