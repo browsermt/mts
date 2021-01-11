@@ -1,9 +1,9 @@
 #ifndef __BERGAMOT_DEFINITIONS_H
 #define __BERGAMOT_DEFINITIONS_H
 
+#include "data/types.h"
 #include "data/vocab_base.h"
 #include <vector>
-#include "data/types.h"
 
 namespace marian {
 namespace bergamot {
@@ -13,7 +13,15 @@ typedef std::vector<Segment> Segments;
 typedef std::vector<marian::string_view> SourceAlignment;
 typedef std::vector<SourceAlignment> SourceAlignments;
 
-}  // namespace marian
-}  // namespace bergamot
+/** @brief Creates unique_ptr any type, passes all arguments to any available
+ *  * constructor */
+template <class T, typename... Args> UPtr<T> UNew(Args &&... args) {
+  return UPtr<T>(new T(std::forward<Args>(args)...));
+}
+
+template <class T> UPtr<T> UNew(UPtr<T> p) { return UPtr<T>(p); }
+
+} // namespace bergamot
+} // namespace marian
 
 #endif // __BERGAMOT_DEFINITIONS_H

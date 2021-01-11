@@ -38,19 +38,17 @@ class Request {
 private:
   unsigned int Id_;
   string_view reference_;
-  Ptr<Segments> segments_;
-  Ptr<SourceAlignments> sourceAlignments_;
-  Ptr<std::promise<TranslationResult>> response_;
+  UPtr<Segments> segments_;
+  UPtr<SourceAlignments> sourceAlignments_;
+  std::promise<TranslationResult> response_;
   std::vector<Ptr<History>> histories_;
   std::atomic<int> counter_;
-
-  // @TODO(jerin): This is a bit weird, need to do better.
-  std::vector<Ptr<Vocab const>> vocabs_;
+  std::vector<Ptr<Vocab const>> *vocabs_;
 
 public:
-  Request(unsigned int, std::vector<Ptr<Vocab const>>, string_view,
-          Ptr<Segments>, Ptr<SourceAlignments>,
-          Ptr<std::promise<TranslationResult>>);
+  Request(unsigned int, std::vector<Ptr<Vocab const>> &, string_view,
+          UPtr<Segments>, UPtr<SourceAlignments>,
+          std::promise<TranslationResult>);
 
   void processHistory(int index, Ptr<History>);
   void completeRequest();
@@ -85,14 +83,16 @@ typedef std::vector<RequestSentence> RequestSentences;
 
 struct PCItem {
   int batchNumber;
-  Ptr<RequestSentences> sentences;
-  PCItem() : batchNumber(-1), sentences(NULL) {}
-  PCItem(int batchNumber, Ptr<RequestSentences> sentences)
-      : batchNumber(batchNumber), sentences(sentences) {}
+  UPtr<RequestSentences> sentences;
 
-  void operator=(const PCItem &b) {
-    batchNumber = b.batchNumber;
-    sentences = b.sentences;
+  PCItem() : batchNumber(-1), sentences(nullptr) {}
+  PCItem(int batchNumber, UPtr<RequestSentences> sentences)
+      : batchNumber(batchNumber), sentences(std::move(sentences)) {}
+
+  friend void swap(PCItem &a, PCItem &b) {
+    using std::swap;
+    swap(a.batchNumber, b.batchNumber);
+    swap(a.sentences, b.sentences);
   }
 
   bool isPoison() { return (batchNumber == -1); }

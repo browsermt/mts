@@ -29,12 +29,12 @@ namespace bergamot {
 class BatchTranslator {
 public:
   BatchTranslator(const BatchTranslator &) = default;
-  BatchTranslator(DeviceId const device, PCQueue<PCItem> *pcqueue,
+  BatchTranslator(DeviceId const device, PCQueue<PCItem> &pcqueue,
                   Ptr<Options> options);
 
   void initGraph();
-  void translate(Ptr<RequestSentences>, Histories &);
-  void mainloop(PCQueue<PCItem> *pcqueue);
+  void translate(RequestSentences &, Histories &);
+  void mainloop();
   std::string _identifier() { return "worker" + std::to_string(device_.no); }
   void join();
 
@@ -47,6 +47,7 @@ private:
   Ptr<data::ShortlistGenerator const> slgen_;
   std::atomic<bool> running_{true};
   std::unique_ptr<std::thread> thread_;
+  PCQueue<PCItem> *pcqueue_;
 };
 } // namespace bergamot
 } // namespace marian

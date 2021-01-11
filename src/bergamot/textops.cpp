@@ -71,8 +71,8 @@ TextProcessor::TextProcessor(Ptr<Options> options)
 }
 
 void TextProcessor::query_to_segments(const string_view &query,
-                                      Ptr<Segments> segments,
-                                      Ptr<SourceAlignments> sourceAlignments) {
+                                      Segments &segments,
+                                      SourceAlignments &sourceAlignments) {
   auto buf = sentence_splitter_.createSentenceStream(query);
   pcrecpp::StringPiece snt;
 
@@ -91,28 +91,28 @@ void TextProcessor::query_to_segments(const string_view &query,
         auto start = tokenized_sentence.begin() + offset;
         Segment segment(start, start + max_input_sentence_tokens_);
         segment.push_back(tokenizer_.vocabs_[0]->getEosId());
-        segments->push_back(segment);
+        segments.push_back(segment);
 
         auto astart = snt_alignment.begin() + offset;
         SourceAlignment segment_alignment(astart, astart + offset);
-        sourceAlignments->push_back(segment_alignment);
+        sourceAlignments.push_back(segment_alignment);
       }
 
       if (offset < max_input_sentence_tokens_) {
         auto start = tokenized_sentence.begin() + offset;
         Segment segment(start, tokenized_sentence.end());
         segment.push_back(tokenizer_.vocabs_[0]->getEosId());
-        segments->push_back(segment);
+        segments.push_back(segment);
 
         auto astart = snt_alignment.begin() + offset;
         SourceAlignment segment_alignment(astart, snt_alignment.end());
-        sourceAlignments->push_back(segment_alignment);
+        sourceAlignments.push_back(segment_alignment);
       }
 
     } else {
       tokenized_sentence.push_back(tokenizer_.vocabs_[0]->getEosId());
-      segments->push_back(tokenized_sentence);
-      sourceAlignments->push_back(snt_alignment);
+      segments.push_back(tokenized_sentence);
+      sourceAlignments.push_back(snt_alignment);
     }
   }
 }

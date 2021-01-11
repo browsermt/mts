@@ -6,11 +6,11 @@ namespace marian {
 namespace bergamot {
 
 BatchTranslator::BatchTranslator(DeviceId const device,
-                                 PCQueue<PCItem> *pcqueue, Ptr<Options> options)
-    : device_(device), options_(options) {
+                                 PCQueue<PCItem> &pcqueue, Ptr<Options> options)
+    : device_(device), options_(options), pcqueue_(&pcqueue) {
 
   ABORT_IF(thread_ != NULL, "Don't call start on a running worker!");
-  thread_.reset(new std::thread([&] { this->mainloop(pcqueue); }));
+  thread_.reset(new std::thread([this] { this->mainloop(); }));
 }
 
 void BatchTranslator::initGraph() {
@@ -40,13 +40,13 @@ void BatchTranslator::initGraph() {
   graph_->forward();
 }
 
-void BatchTranslator::translate(Ptr<RequestSentences> requestSentences,
+void BatchTranslator::translate(RequestSentences &requestSentences,
                                 Histories &histories) {
   int id = 0;
   std::vector<data::SentenceTuple> batchVector;
   Timer timer;
 
-  for (auto &sentence : *requestSentences) {
+  for (auto &sentence : requestSentences) {
     data::SentenceTuple sentence_tuple(id);
     Segment segment = sentence.getUnderlyingSegment();
     sentence_tuple.push_back(segment);
@@ -108,12 +108,12 @@ void BatchTranslator::translate(Ptr<RequestSentences> requestSentences,
   timer.reset();
 }
 
-void BatchTranslator::mainloop(PCQueue<PCItem> *pcqueue) {
+void BatchTranslator::mainloop() {
   initGraph();
   while (running_) {
     Timer timer;
     PCItem pcitem;
-    pcqueue->Consume(pcitem);
+    pcqueue_->ConsumeSwap(pcitem);
     if (pcitem.isPoison()) {
       running_ = false;
       PLOG(_identifier(), info, "Recieved poison, setting running_ to false");
@@ -121,7 +121,7 @@ void BatchTranslator::mainloop(PCQueue<PCItem> *pcqueue) {
       PLOG(_identifier(), info, "consumed item in {}; ", timer.elapsed());
       timer.reset();
       Histories histories;
-      translate(pcitem.sentences, histories);
+      translate(*pcitem.sentences.get(), histories);
       PLOG(_identifier(), info, "translated batch {} in {}; ",
            pcitem.batchNumber, timer.elapsed());
       timer.reset();
@@ -137,7 +137,6 @@ void BatchTranslator::mainloop(PCQueue<PCItem> *pcqueue) {
 void BatchTranslator::join() {
   PLOG(_identifier(), info, "Join called on {}", _identifier());
   thread_->join();
-  PLOG(_identifier(), info, "Joined {}", _identifier());
   thread_.reset();
 }
 

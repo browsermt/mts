@@ -44,8 +44,8 @@ public:
   unsigned int max_input_sentence_tokens_;
   SentenceSplitter sentence_splitter_;
   explicit TextProcessor(Ptr<Options>);
-  void query_to_segments(const string_view &query, Ptr<Segments>,
-                         Ptr<SourceAlignments>);
+  void query_to_segments(const string_view &query, Segments &,
+                         SourceAlignments &);
 };
 
 } // namespace bergamot

@@ -10,13 +10,16 @@
 namespace marian {
 namespace bergamot {
 
-Request::Request(unsigned int Id, std::vector<Ptr<Vocab const>> vocabs,
-                 string_view reference, Ptr<Segments> segments,
-                 Ptr<SourceAlignments> sourceAlignments,
-                 Ptr<std::promise<TranslationResult>> translationResultPromise)
-    : Id_(Id), vocabs_(vocabs), reference_(reference), segments_(segments),
-      sourceAlignments_(sourceAlignments), response_(translationResultPromise),
-      counter_(segments->size()) {
+Request::Request(unsigned int Id, std::vector<Ptr<Vocab const>> &vocabs,
+                 string_view reference, UPtr<Segments> segments,
+                 UPtr<SourceAlignments> sourceAlignments,
+                 std::promise<TranslationResult> translationResultPromise)
+    : Id_(Id), vocabs_(&vocabs), reference_(reference),
+      segments_(std::move(segments)),
+      sourceAlignments_(std::move(sourceAlignments)),
+      response_(std::move(translationResultPromise)) {
+
+  counter_ = segments_->size();
 
   // Set vector<Ptr<History>> to nullptr.
   for (int i = 0; i < segments_->size(); i++) {
@@ -47,18 +50,18 @@ void Request::processHistory(int index, Ptr<History> history) {
 void Request::completeRequest() {
   TranslationResult translation_result;
   for (int i = 0; i < segments_->size(); i++) {
-    std::string source = vocabs_.front()->decode(getSegment(i));
+    std::string source = vocabs_->front()->decode(getSegment(i));
     translation_result.sources.push_back(source);
 
     Ptr<History> history = histories_[i];
     NBestList onebest = history->nBest(1);
     Result result = onebest[0]; // Expecting only one result;
     Words words = std::get<0>(result);
-    std::string decoded = vocabs_.back()->decode(words);
+    std::string decoded = vocabs_->back()->decode(words);
     translation_result.translations.push_back(decoded);
   }
   LOG(info, "Last translation in. Closing request;");
-  response_->set_value(translation_result);
+  response_.set_value(translation_result);
 }
 
 bool Request::operator<(const Request &b) const {
