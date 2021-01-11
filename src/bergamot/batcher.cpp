@@ -34,11 +34,8 @@ void Batcher::cleave_batch(Ptr<RequestSentences> sentences) {
       padded_batch_size = (segments_added + 1) * i;
       if (padded_batch_size < max_input_tokens_) {
         auto q = p;
-        current_input_tokens += i;
-        // Segment segment = q->getUnderlyingSegment();
-        // segments->push_back(std::move(segment));
         ++p;
-
+        current_input_tokens += i;
         sentences->push_back(*q);
         ++segments_added;
         bucket[i].erase(q);

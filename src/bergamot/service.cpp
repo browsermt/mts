@@ -9,7 +9,7 @@ namespace bergamot {
 
 Service::Service(Ptr<Options> options)
     : text_processor_(options), batcher_(options), running_(true),
-      requestId_(0) {
+      requestId_(0), batchNumber_(0) {
 
   int num_workers = options->get<int>("cpu-threads");
 
@@ -52,22 +52,17 @@ std::future<TranslationResult> Service::queue(const string_view &input) {
     batcher_.addSentenceWithPriority(requestSentence);
   }
 
-  /* Cleave batch, run translation */
-  Ptr<Segments> batchSegments;
   Ptr<RequestSentences> batchSentences;
 
-  int counter = 0;
   do {
     // TODO(jerin): Check move under-the-hood / memory leaks.
-    batchSegments = New<Segments>();
     batchSentences = New<std::vector<RequestSentence>>();
     batcher_.cleave_batch(batchSentences);
 
     if (batchSentences->size() > 0) {
-      PCItem pcitem(batchSegments, batchSentences);
+      PCItem pcitem(batchNumber_++, batchSentences);
       pcqueue_->Produce(pcitem);
-      ++counter;
-      PLOG("main", info, "Batch {} generated", counter);
+      PLOG("main", info, "Batch {} generated", batchNumber_ - 1);
     }
   } while (batchSentences->size() > 0);
 
@@ -87,8 +82,13 @@ void Service::stop() {
       PLOG("main", info, "Adding poison {}", counter);
       ++counter;
     }
+
+    counter = 0;
     for (auto &worker : workers_) {
+      PLOG("main", info, "Joining worker {}", counter);
       worker->join();
+      PLOG("main", info, "Joined worker {}", counter);
+      ++counter;
     }
 
     running_ = false;

@@ -30,6 +30,7 @@ private:
   std::vector<UPtr<BatchTranslator>> workers_;
   bool running_;
   unsigned int requestId_;
+  unsigned int batchNumber_;
 };
 
 } // namespace bergamot

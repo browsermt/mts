@@ -116,12 +116,14 @@ void BatchTranslator::mainloop(PCQueue<PCItem> *pcqueue) {
     pcqueue->Consume(pcitem);
     if (pcitem.isPoison()) {
       running_ = false;
+      PLOG(_identifier(), info, "Recieved poison, setting running_ to false");
     } else {
       PLOG(_identifier(), info, "consumed item in {}; ", timer.elapsed());
       timer.reset();
       Histories histories;
       translate(pcitem.sentences, histories);
-      PLOG(_identifier(), info, "translated item in {}; ", timer.elapsed());
+      PLOG(_identifier(), info, "translated batch {} in {}; ",
+           pcitem.batchNumber, timer.elapsed());
       timer.reset();
       for (int i = 0; i < (pcitem.sentences)->size(); i++) {
         Ptr<History> history = histories.at(i);
@@ -133,7 +135,9 @@ void BatchTranslator::mainloop(PCQueue<PCItem> *pcqueue) {
 }
 
 void BatchTranslator::join() {
+  PLOG(_identifier(), info, "Join called on {}", _identifier());
   thread_->join();
+  PLOG(_identifier(), info, "Joined {}", _identifier());
   thread_.reset();
 }
 

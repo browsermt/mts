@@ -84,18 +84,18 @@ public:
 typedef std::vector<RequestSentence> RequestSentences;
 
 struct PCItem {
-  Ptr<Segments> segments;
+  int batchNumber;
   Ptr<RequestSentences> sentences;
-  PCItem() : segments(NULL), sentences(NULL) {}
-  PCItem(Ptr<Segments> segments, Ptr<RequestSentences> sentences)
-      : segments(segments), sentences(sentences) {}
+  PCItem() : batchNumber(-1), sentences(NULL) {}
+  PCItem(int batchNumber, Ptr<RequestSentences> sentences)
+      : batchNumber(batchNumber), sentences(sentences) {}
 
   void operator=(const PCItem &b) {
-    segments = b.segments;
+    batchNumber = b.batchNumber;
     sentences = b.sentences;
   }
 
-  bool isPoison() { return (sentences == NULL); }
+  bool isPoison() { return (batchNumber == -1); }
 };
 
 } // namespace bergamot
