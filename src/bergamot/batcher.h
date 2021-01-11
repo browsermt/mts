@@ -21,7 +21,7 @@ class Batcher {
 public:
   explicit Batcher(Ptr<Options> options);
   void addSentenceWithPriority(RequestSentence &);
-  void cleave_batch(Ptr<Segments>, Ptr<RequestSentences>);
+  void cleave_batch(Ptr<RequestSentences>);
 };
 
 } // namespace bergamot

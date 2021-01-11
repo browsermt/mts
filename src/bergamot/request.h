@@ -95,7 +95,7 @@ struct PCItem {
     sentences = b.sentences;
   }
 
-  bool isPoison() { return (segments == NULL); }
+  bool isPoison() { return (sentences == NULL); }
 };
 
 } // namespace bergamot

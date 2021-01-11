@@ -33,7 +33,7 @@ public:
                   Ptr<Options> options);
 
   void initGraph();
-  void translate(const Ptr<Segments>, Histories &);
+  void translate(Ptr<RequestSentences>, Histories &);
   void mainloop(PCQueue<PCItem> *pcqueue);
   std::string _identifier() { return "worker" + std::to_string(device_.no); }
   void join();

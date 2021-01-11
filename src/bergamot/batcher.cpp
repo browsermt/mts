@@ -22,8 +22,7 @@ void Batcher::addSentenceWithPriority(RequestSentence &sentence) {
   bucket[bucket_id].insert(sentence);
 }
 
-void Batcher::cleave_batch(Ptr<Segments> segments,
-                           Ptr<RequestSentences> sentences) {
+void Batcher::cleave_batch(Ptr<RequestSentences> sentences) {
   /* Temporary stub, needs improvement this section */
   int segments_added = 0;
   int current_input_tokens = 0;
@@ -36,10 +35,11 @@ void Batcher::cleave_batch(Ptr<Segments> segments,
       if (padded_batch_size < max_input_tokens_) {
         auto q = p;
         current_input_tokens += i;
-        Segment segment = q->getUnderlyingSegment();
-        segments->push_back(std::move(segment));
-        sentences->push_back(*q);
+        // Segment segment = q->getUnderlyingSegment();
+        // segments->push_back(std::move(segment));
         ++p;
+
+        sentences->push_back(*q);
         ++segments_added;
         bucket[i].erase(q);
         prev_padded_batch_size = padded_batch_size;

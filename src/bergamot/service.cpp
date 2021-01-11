@@ -61,15 +61,15 @@ std::future<TranslationResult> Service::queue(const string_view &input) {
     // TODO(jerin): Check move under-the-hood / memory leaks.
     batchSegments = New<Segments>();
     batchSentences = New<std::vector<RequestSentence>>();
-    batcher_.cleave_batch(batchSegments, batchSentences);
+    batcher_.cleave_batch(batchSentences);
 
-    if (batchSegments->size() > 0) {
+    if (batchSentences->size() > 0) {
       PCItem pcitem(batchSegments, batchSentences);
       pcqueue_->Produce(pcitem);
       ++counter;
       PLOG("main", info, "Batch {} generated", counter);
     }
-  } while (batchSegments->size() > 0);
+  } while (batchSentences->size() > 0);
 
   return future;
 }

@@ -40,14 +40,15 @@ void BatchTranslator::initGraph() {
   graph_->forward();
 }
 
-void BatchTranslator::translate(const Ptr<Segments> segments,
+void BatchTranslator::translate(Ptr<RequestSentences> requestSentences,
                                 Histories &histories) {
   int id = 0;
   std::vector<data::SentenceTuple> batchVector;
   Timer timer;
 
-  for (auto &segment : *segments) {
+  for (auto &sentence : *requestSentences) {
     data::SentenceTuple sentence_tuple(id);
+    Segment segment = sentence.getUnderlyingSegment();
     sentence_tuple.push_back(segment);
     batchVector.push_back(sentence_tuple);
     id++;
@@ -119,7 +120,7 @@ void BatchTranslator::mainloop(PCQueue<PCItem> *pcqueue) {
       PLOG(_identifier(), info, "consumed item in {}; ", timer.elapsed());
       timer.reset();
       Histories histories;
-      translate(pcitem.segments, histories);
+      translate(pcitem.sentences, histories);
       PLOG(_identifier(), info, "translated item in {}; ", timer.elapsed());
       timer.reset();
       for (int i = 0; i < (pcitem.sentences)->size(); i++) {
