@@ -1,4 +1,8 @@
-#pragma once
+#ifndef SRC_BERGAMOT_TRANSLATION_RESULT_H_
+#define SRC_BERGAMOT_TRANSLATION_RESULT_H_
+
+#include <vector>
+#include <string>
 
 namespace marian {
 namespace bergamot {
@@ -11,3 +15,5 @@ struct TranslationResult {
 };
 }  // namespace bergamot
 }  // namespace marian
+
+#endif  // SRC_BERGAMOT_TRANSLATION_RESULT_H_

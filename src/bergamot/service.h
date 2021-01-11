@@ -1,17 +1,18 @@
-#ifndef __SERVICE_H
-#define __SERVICE_H
+#ifndef SRC_BERGAMOT_SERVICE_H_
+#define SRC_BERGAMOT_SERVICE_H_
 
-#include "data/types.h"
+#include "batch_translator.h"
+#include "batcher.h"
+#include "pcqueue.h"
+#include "textops.h"
 #include "translation_result.h"
 
-#include "textops.h"
-#include "batcher.h"
-#include "batch_translator.h"
-#include "pcqueue.h"
+#include <vector>
+
+#include "data/types.h"
 
 namespace marian {
 namespace bergamot {
-
 
 class Service {
 public:
@@ -31,7 +32,7 @@ private:
   unsigned int requestId_;
 };
 
-}  // namespace bergamot
-}  // namespace marian
+} // namespace bergamot
+} // namespace marian
 
-#endif // __SERVICE_H
+#endif // SRC_BERGAMOT_SERVICE_H_

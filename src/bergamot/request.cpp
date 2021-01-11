@@ -1,87 +1,93 @@
-#include "common/logging.h"
 #include "request.h"
+
 #include "definitions.h"
 #include "translation_result.h"
-#include "sys/time.h"
-#include <iostream>
+
+#include "common/logging.h"
+
+#include <string>
 
 namespace marian {
 namespace bergamot {
 
-Request::Request(unsigned int Id, 
-                 std::vector<Ptr<Vocab const>> vocabs,
-                 string_view reference,
-                 Ptr<Segments> segments,
+Request::Request(unsigned int Id, std::vector<Ptr<Vocab const>> vocabs,
+                 string_view reference, Ptr<Segments> segments,
                  Ptr<SourceAlignments> sourceAlignments,
                  Ptr<std::promise<TranslationResult>> translationResultPromise)
-    : Id(Id),
-      vocabs_(vocabs), reference_(reference), 
-      segments(segments),
-      sourceAlignments(sourceAlignments),
-      response_(translationResultPromise), 
+    : Id_(Id), vocabs_(vocabs), reference_(reference), segments_(segments),
+      sourceAlignments_(sourceAlignments), response_(translationResultPromise),
       counter_(segments->size()) {
 
-      for(int i=0; i < segments->size(); i++){
-          histories_.push_back(nullptr);
-      }
-
+  // Set vector<Ptr<History>> to nullptr.
+  for (int i = 0; i < segments_->size(); i++) {
+    histories_.push_back(nullptr);
+  }
 }
 
-int Request::size(){ 
-  return segments->size(); 
-};
+int Request::numSegments() const { return segments_->size(); }
 
-void Request::set_translation(int index, Ptr<History> history) {
-  /* This can be accessed by multiple batch_translators at once. */
-  // std::lock_guard<std::mutex> request_lock(update_mutex_);
+int Request::segmentTokens(int index) const {
+  return (segments_->at(index)).size();
+}
+
+Segment Request::getSegment(int index) const { return segments_->at(index); }
+
+void Request::processHistory(int index, Ptr<History> history) {
+  // Concurrently called by multiple workers as a history from translation is
+  // ready. The container storing histories is set with the value obtained.
   histories_[index] = history;
-  if(--counter_ == 0){
-    TranslationResult translation_result;
-    for(int i=0; i < segments->size(); i++){
-      translation_result.sources.push_back(
-          vocabs_.front()->decode(segments->at(i))
-      );
 
-      history = histories_[i];
-      NBestList onebest = history->nBest(1);
-      Result result = onebest[0];  // Expecting only one result;
-      Words words = std::get<0>(result);
-      translation_result.translations.push_back(
-          vocabs_.back()->decode(words)
-     );
-    
-    }
-    LOG(info, "Last translation in. Closing request;");
-    response_->set_value(translation_result);
+  // In case this is last request in, completeRequest is called, which sets the
+  // value of the promise.
+  if (--counter_ == 0) {
+    completeRequest();
   }
 }
 
-bool operator<(const Request &a, const Request &b) {
-  // TODO(jerin): Probably enhance
-  return a.Id < b.Id;
-}
+void Request::completeRequest() {
+  TranslationResult translation_result;
+  for (int i = 0; i < segments_->size(); i++) {
+    std::string source = vocabs_.front()->decode(getSegment(i));
+    translation_result.sources.push_back(source);
 
-RequestSentence::RequestSentence(int index, 
-                                 Ptr<Request> request)
-    : index(index), request(request) {}
-
-int RequestSentence::num_tokens(){
-  return (request->segments->at(index).size());
-}
-
-Segment RequestSentence::segment() const {
-  return request->segments->at(index);
-}
-
-bool operator<(const RequestSentence& a, const RequestSentence& b) {
-  if(a.request == b.request){
-    return a.index < b.index;
+    Ptr<History> history = histories_[i];
+    NBestList onebest = history->nBest(1);
+    Result result = onebest[0]; // Expecting only one result;
+    Words words = std::get<0>(result);
+    std::string decoded = vocabs_.back()->decode(words);
+    translation_result.translations.push_back(decoded);
   }
-  return a < b;
+  LOG(info, "Last translation in. Closing request;");
+  response_->set_value(translation_result);
 }
 
-bool operator==(const RequestSentence& a, const RequestSentence& b) {
-  return (a.index == b.index) and (a.request == b.request);
-};
-}  // namespace bergamot
-}  // namespace marian
+bool Request::operator<(const Request &b) const {
+  // Among Requests, only sequence id is used for obtaining priority.
+  return Id_ < b.Id_;
+}
+
+RequestSentence::RequestSentence(int index, Ptr<Request> request)
+    : index_(index), request_(request) {}
+
+int RequestSentence::numTokens() { return (request_->segmentTokens(index_)); }
+
+void RequestSentence::completeSentence(Ptr<History> history) {
+  // Relays completeSentence into request's processHistory, using index
+  // information.
+  request_->processHistory(index_, history);
+}
+
+Segment RequestSentence::getUnderlyingSegment() const {
+  return request_->getSegment(index_);
+}
+
+bool operator<(const RequestSentence &a, const RequestSentence &b) {
+  // Operator overload for usage in priority-queue / set.
+  if (a.request_ == b.request_) {
+    return a.index_ < b.index_;
+  }
+  return a.request_ < b.request_;
+}
+
+} // namespace bergamot
+} // namespace marian

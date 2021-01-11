@@ -6,9 +6,8 @@
 #include "definitions.h"
 #include "request.h"
 
-#include <vector>
 #include <set>
-
+#include <vector>
 
 namespace marian {
 namespace bergamot {
@@ -19,14 +18,13 @@ class Batcher {
   unsigned int max_input_sentence_tokens_;
   std::vector<std::set<RequestSentence>> bucket;
 
- public:
+public:
   explicit Batcher(Ptr<Options> options);
   void addSentenceWithPriority(RequestSentence &);
   void cleave_batch(Ptr<Segments>, Ptr<RequestSentences>);
 };
 
-}  // namespace bergamot
-}  // namespace marian
-
+} // namespace bergamot
+} // namespace marian
 
 #endif // __BERGAMOT_BATCHER_H

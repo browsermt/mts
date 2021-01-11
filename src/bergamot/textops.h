@@ -2,21 +2,20 @@
 #define __BERGAMOT_TEXTOPS_H
 
 #include "common/definitions.h"
-#include "common/options.h"
-#include "ssplit/ssplit.h"
 #include "common/logging.h"
-#include "common/types.h"  // missing in shortlist.h
+#include "common/options.h"
+#include "common/types.h" // missing in shortlist.h
 #include "common/utils.h"
-#include "data/shortlist.h"
 #include "data/sentencepiece_vocab.h"
+#include "data/shortlist.h"
 #include "definitions.h"
+#include "ssplit/ssplit.h"
 
 #include <string>
 #include <vector>
 
 namespace marian {
 namespace bergamot {
-
 
 class SentenceSplitter {
 public:
@@ -31,7 +30,6 @@ private:
 };
 
 class Tokenizer {
-
 public:
   std::vector<Ptr<Vocab const>> vocabs_;
   bool inference_;
@@ -41,17 +39,16 @@ public:
 };
 
 class TextProcessor {
- public:
+public:
   Tokenizer tokenizer_;
   unsigned int max_input_sentence_tokens_;
   SentenceSplitter sentence_splitter_;
   explicit TextProcessor(Ptr<Options>);
-  void query_to_segments(const string_view &query,
-                         Ptr<Segments>,
+  void query_to_segments(const string_view &query, Ptr<Segments>,
                          Ptr<SourceAlignments>);
 };
 
-}  // namespace bergamot
-}  // namespace marian
+} // namespace bergamot
+} // namespace marian
 
 #endif // __BERGAMOT_TEXTOPS_H

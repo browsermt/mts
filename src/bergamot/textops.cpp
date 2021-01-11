@@ -1,37 +1,32 @@
-#include "utils.h"
 #include "textops.h"
+#include "utils.h"
 #include <pcrecpp.h>
 #include <string>
-#include <vector>
 #include <unordered_map>
 #include <utility>
-
+#include <vector>
 
 namespace marian {
 namespace bergamot {
-
 
 SentenceSplitter::SentenceSplitter(marian::Ptr<marian::Options> options)
     : options_(options) {
 
   std::string smode_str = options_->get<std::string>("ssplit-mode", "");
   mode_ = string2splitmode(smode_str);
-  std::string ssplit_prefix_file = options_->get<std::string>
-                                    ("ssplit-prefix-file", "");
+  std::string ssplit_prefix_file =
+      options_->get<std::string>("ssplit-prefix-file", "");
 
   if (ssplit_prefix_file.size()) {
-    ssplit_prefix_file
-        = marian::cli::interpolateEnvVars(ssplit_prefix_file);
+    ssplit_prefix_file = marian::cli::interpolateEnvVars(ssplit_prefix_file);
 
-    LOG(info,
-        "Loading protected prefixes for sentence splitting from {}",
+    LOG(info, "Loading protected prefixes for sentence splitting from {}",
         ssplit_prefix_file);
 
     ssplit_.load(ssplit_prefix_file);
   } else {
-    LOG(warn,
-        "Missing list of protected prefixes for sentence splitting. "
-        "Set with --ssplit-prefix-file.");
+    LOG(warn, "Missing list of protected prefixes for sentence splitting. "
+              "Set with --ssplit-prefix-file.");
   }
 }
 
@@ -55,25 +50,22 @@ SentenceSplitter::string2splitmode(const std::string &m) {
   return splitmode::wrapped_text;
 }
 
-Tokenizer::Tokenizer(Ptr<Options> options):
-                inference_(true), addEOS_(false) {
+Tokenizer::Tokenizer(Ptr<Options> options) : inference_(true), addEOS_(false) {
   vocabs_ = loadVocabularies(options);
 }
 
-
-Segment Tokenizer::tokenize(string_view const &snt, 
+Segment Tokenizer::tokenize(string_view const &snt,
                             SourceAlignment &sourceAlignment) {
   // TODO(jerin): Bunch of hardcode here, 1, 0, need to get rid off somehow.
-  return vocabs_[0]->encodePreservingSource(snt,
-                                            sourceAlignment,
-                                            addEOS_,
+  return vocabs_[0]->encodePreservingSource(snt, sourceAlignment, addEOS_,
                                             inference_);
 }
 
 TextProcessor::TextProcessor(Ptr<Options> options)
     : tokenizer_(options), sentence_splitter_(options) {
   max_input_sentence_tokens_ = options->get<int>("max-input-sentence-tokens");
-  max_input_sentence_tokens_ = max_input_sentence_tokens_ - 1; // Account for EOS
+  max_input_sentence_tokens_ =
+      max_input_sentence_tokens_ - 1; // Account for EOS
   // Dirty assert, should do at configparse
   assert(max_input_sentence_tokens_ > 0);
 }
@@ -88,8 +80,8 @@ void TextProcessor::query_to_segments(const string_view &query,
     LOG(trace, "SNT: {}", snt);
     string_view snt_string_view(snt.data(), snt.size());
     SourceAlignment snt_alignment;
-    Segment tokenized_sentence
-        = tokenizer_.tokenize(snt_string_view, snt_alignment);
+    Segment tokenized_sentence =
+        tokenizer_.tokenize(snt_string_view, snt_alignment);
 
     if (tokenized_sentence.size() > max_input_sentence_tokens_) {
       int offset;
@@ -102,7 +94,7 @@ void TextProcessor::query_to_segments(const string_view &query,
         segments->push_back(segment);
 
         auto astart = snt_alignment.begin() + offset;
-        SourceAlignment segment_alignment(astart, astart+offset);
+        SourceAlignment segment_alignment(astart, astart + offset);
         sourceAlignments->push_back(segment_alignment);
       }
 
@@ -125,5 +117,5 @@ void TextProcessor::query_to_segments(const string_view &query,
   }
 }
 
-}  // namespace bergamot
-}  // namespace marian
+} // namespace bergamot
+} // namespace marian

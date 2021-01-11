@@ -12,7 +12,6 @@
 
 #include "service.h"
 
-
 int main(int argc, char *argv[]) {
   marian::ConfigParser cp(marian::cli::mode::translation);
 
@@ -31,8 +30,8 @@ int main(int argc, char *argv[]) {
   cp.addOption<std::string>(
       "--ssplit-prefix-file", "Server Options",
       "File with nonbreaking prefixes for sentence splitting.");
-  cp.addOption<std::string>(
-      "--ssplit-mode", "Server Options", "[paragraph, sentence, wrapped_text]");
+  cp.addOption<std::string>("--ssplit-mode", "Server Options",
+                            "[paragraph, sentence, wrapped_text]");
   cp.addOption<std::string>("--source-language", "Server Options",
                             "source language of translation service");
   cp.addOption<std::string>("--target-language", "Server Options",
@@ -57,8 +56,8 @@ int main(int argc, char *argv[]) {
   // std::getline(std::cin, input);
   // std::cout << input << "\n";
 
-  std::ostringstream std_input; 
-  std_input  << std::cin.rdbuf(); 
+  std::ostringstream std_input;
+  std_input << std::cin.rdbuf();
   std::string input = std_input.str();
 
   marian::string_view input_view(input);
@@ -68,10 +67,10 @@ int main(int argc, char *argv[]) {
   auto translation_result_future = service.translate(input_view);
   translation_result_future.wait();
   auto translation_result = translation_result_future.get();
-  for (int i=0; i < translation_result.sources.size(); i++){
-    std::cout<< "[src] " << translation_result.sources[i]<<"\n";
-    std::cout<< "[tgt] " << translation_result.translations[i]<<"\n";
-    std::cout<< "--------------------------------\n";
+  for (int i = 0; i < translation_result.sources.size(); i++) {
+    std::cout << "[src] " << translation_result.sources[i] << "\n";
+    std::cout << "[tgt] " << translation_result.translations[i] << "\n";
+    std::cout << "--------------------------------\n";
   }
 
   service.stop();
