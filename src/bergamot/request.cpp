@@ -35,9 +35,7 @@ void Request::set_translation(int index, Ptr<History> history) {
   /* This can be accessed by multiple batch_translators at once. */
   // std::lock_guard<std::mutex> request_lock(update_mutex_);
   histories_[index] = history;
-  --counter_;
-
-  if(--counter_){
+  if(--counter_ == 0){
     TranslationResult translation_result;
     for(int i=0; i < segments->size(); i++){
       translation_result.sources.push_back(
