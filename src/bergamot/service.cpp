@@ -33,31 +33,41 @@ Service::Service(Ptr<Options> options)
 std::future<TranslationResult> Service::queue(const string_view &input) {
   // @TODO(jerin): Place a queue to keep track of requests here.
 
+  // Create segments and sourceAlignments, load via TextProcessor
   UPtr<Segments> segments = UNew<Segments>();
   UPtr<SourceAlignments> sourceAlignments = UNew<SourceAlignments>();
+
   text_processor_.query_to_segments(input, *segments.get(),
                                     *sourceAlignments.get());
 
+  // Create promise and obtain future.
   std::promise<TranslationResult> translationResultPromise;
   auto future = translationResultPromise.get_future();
 
+  // Move ownership and construct request.
   UPtr<Request> request = UNew<Request>(
       requestId_++, vocabs_, input, std::move(segments),
       std::move(sourceAlignments), std::move(translationResultPromise));
 
+  // Adding sentences from a request to batcher.
   for (int i = 0; i < request->numSegments(); i++) {
     RequestSentence requestSentence(i, *request.get());
     batcher_.addSentenceWithPriority(requestSentence);
   }
 
+  // Moving request into service Ownership to keep UPtr from deleting once out
+  // of scope. Alternative: Use shared_ptr? Overhead doesn't seem to be much.
   requests_.push(std::move(request));
 
+  // Construct batches of RequestSentences and add to PCQueue for workers to
+  // consume.
   UPtr<RequestSentences> batchSentences;
-
   int numSentences;
   do {
     batchSentences = UNew<std::vector<RequestSentence>>();
     batcher_.cleave_batch(*batchSentences.get());
+
+    // Using batchSentences-> directly with move-semantics lead to segfault.
     numSentences = batchSentences->size();
 
     if (numSentences > 0) {

@@ -90,7 +90,7 @@ void TextProcessor::query_to_segments(const string_view &query,
            offset += max_input_sentence_tokens_) {
         auto start = tokenized_sentence.begin() + offset;
         Segment segment(start, start + max_input_sentence_tokens_);
-        segment.push_back(tokenizer_.vocabs_[0]->getEosId());
+        segment.push_back(tokenizer_.sourceEosId());
         segments.push_back(segment);
 
         auto astart = snt_alignment.begin() + offset;
@@ -101,7 +101,7 @@ void TextProcessor::query_to_segments(const string_view &query,
       if (offset < max_input_sentence_tokens_) {
         auto start = tokenized_sentence.begin() + offset;
         Segment segment(start, tokenized_sentence.end());
-        segment.push_back(tokenizer_.vocabs_[0]->getEosId());
+        segment.push_back(tokenizer_.sourceEosId());
         segments.push_back(segment);
 
         auto astart = snt_alignment.begin() + offset;
@@ -110,7 +110,7 @@ void TextProcessor::query_to_segments(const string_view &query,
       }
 
     } else {
-      tokenized_sentence.push_back(tokenizer_.vocabs_[0]->getEosId());
+      tokenized_sentence.push_back(tokenizer_.sourceEosId());
       segments.push_back(tokenized_sentence);
       sourceAlignments.push_back(snt_alignment);
     }

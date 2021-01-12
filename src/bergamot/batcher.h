@@ -11,8 +11,6 @@
 
 namespace marian {
 namespace bergamot {
-struct RequestSentence;
-
 class Batcher {
   unsigned int max_input_tokens_;
   unsigned int max_input_sentence_tokens_;
