@@ -45,19 +45,15 @@ std::future<TranslationResult> Service::queue(const string_view &input) {
   auto future = translationResultPromise.get_future();
 
   // Move ownership and construct request.
-  UPtr<Request> request = UNew<Request>(
+  Ptr<Request> request = New<Request>(
       requestId_++, vocabs_, input, std::move(segments),
       std::move(sourceAlignments), std::move(translationResultPromise));
 
   // Adding sentences from a request to batcher.
   for (int i = 0; i < request->numSegments(); i++) {
-    RequestSentence requestSentence(i, *request.get());
+    RequestSentence requestSentence(i, request);
     batcher_.addSentenceWithPriority(requestSentence);
   }
-
-  // Moving request into service Ownership to keep UPtr from deleting once out
-  // of scope. Alternative: Use shared_ptr? Overhead doesn't seem to be much.
-  requests_.push(std::move(request));
 
   // Construct batches of RequestSentences and add to PCQueue for workers to
   // consume.

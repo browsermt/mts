@@ -69,8 +69,8 @@ bool Request::operator<(const Request &b) const {
   return Id_ < b.Id_;
 }
 
-RequestSentence::RequestSentence(int index, Request &request)
-    : index_(index), request_(&request) {}
+RequestSentence::RequestSentence(int index, Ptr<Request> request)
+    : index_(index), request_(request) {}
 
 int RequestSentence::numTokens() { return (request_->segmentTokens(index_)); }
 

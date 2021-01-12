@@ -75,10 +75,10 @@ public:
 class RequestSentence {
 private:
   int index_;
-  Request *request_;
+  Ptr<Request> request_;
 
 public:
-  RequestSentence(int, Request &);
+  RequestSentence(int, Ptr<Request>);
 
   // Returns token in Segment corresponding to index.
   int numTokens();
