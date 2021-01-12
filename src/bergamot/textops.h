@@ -30,19 +30,24 @@ private:
 };
 
 class Tokenizer {
-public:
+private:
   std::vector<Ptr<Vocab const>> vocabs_;
   bool inference_;
   bool addEOS_;
+
+public:
   explicit Tokenizer(Ptr<Options>);
   Segment tokenize(string_view const &, SourceAlignment &);
+  Word sourceEosId() { return vocabs_.front()->getEosId(); };
 };
 
 class TextProcessor {
-public:
+private:
   Tokenizer tokenizer_;
-  unsigned int max_input_sentence_tokens_;
   SentenceSplitter sentence_splitter_;
+  unsigned int max_input_sentence_tokens_;
+
+public:
   explicit TextProcessor(Ptr<Options>);
   void query_to_segments(const string_view &query, Segments &,
                          SourceAlignments &);

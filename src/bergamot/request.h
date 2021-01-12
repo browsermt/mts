@@ -8,16 +8,15 @@
 // translating by the workers (BatchTranslator). Request is to be extended with
 // notions of Priority (sequence, user-given).
 //
-// RequestSentence: is a mapping of (index, Request*). This provides the
+// RequestSentence: is a tuple of (index, Request*). This provides the
 // batching mechanism access to the segment within the request. The backref to
 // Request allows event triggering the barrier upon completion of the last
 // sentence by a worker.
 //
-// PCItem: is a vector of RequestSentences and the corresponding Segments,
-// which is what the ProducerConsumer queue holds. Can probably get rid of
-// Segment here and use RequestSentence directly to construct batches.
-// Separation is worker(BatchTranslator) need not be aware of the notion of
-// Request, but only a Batch of segments.
+// PCItem: is a vector of RequestSentences and a batchNumber, which is what the
+// PCQueue holds. The batches are constructed from segments returned by a
+// RequestSentence. Can be enhanced with paddingSize, countTokens eventually for
+// logging.
 
 #ifndef SRC_BERGAMOT_REQUEST_H_
 #define SRC_BERGAMOT_REQUEST_H_
@@ -38,20 +37,19 @@ class Request {
 private:
   unsigned int Id_;
   string_view reference_;
-  UPtr<Segments> segments_;
-  UPtr<SourceAlignments> sourceAlignments_;
-  std::promise<TranslationResult> response_;
-  std::vector<Ptr<History>> histories_;
   std::atomic<int> counter_;
   std::vector<Ptr<Vocab const>> *vocabs_;
+
+  UPtr<Segments> segments_;
+  UPtr<SourceAlignments> sourceAlignments_;
+  std::vector<Ptr<History>> histories_;
+
+  std::promise<TranslationResult> response_;
 
 public:
   Request(unsigned int, std::vector<Ptr<Vocab const>> &, string_view,
           UPtr<Segments>, UPtr<SourceAlignments>,
           std::promise<TranslationResult>);
-
-  void processHistory(int index, Ptr<History>);
-  void completeRequest();
 
   // Obtain the count of tokens in a segment. Used to insert sentence from
   // multiple requests into the corresponding size bucket.
@@ -63,7 +61,15 @@ public:
   // Obtains a segment to create a batch of segments among several requests.
   Segment getSegment(int) const;
 
+  // For notions of priority among requests (used to enable <set> in Batcher).
   bool operator<(const Request &) const;
+
+  // Processes a history obtained after translating in a heterogenous batch
+  // compiled from requests.
+  void processHistory(int index, Ptr<History>);
+
+  // On completion of last segment, sets value of the promise.
+  void completeRequest();
 };
 
 class RequestSentence {
@@ -73,6 +79,8 @@ private:
 
 public:
   RequestSentence(int, Request &);
+
+  // Returns token in Segment corresponding to index.
   int numTokens();
   Segment getUnderlyingSegment() const;
   void completeSentence(Ptr<History>);
@@ -85,16 +93,24 @@ struct PCItem {
   int batchNumber;
   UPtr<RequestSentences> sentences;
 
+  // PCItem should be default constructible. Default constructed element is
+  // poison.
   PCItem() : batchNumber(-1), sentences(nullptr) {}
+
+  // PCItem constructor to construct a legit PCItem.
   PCItem(int batchNumber, UPtr<RequestSentences> sentences)
       : batchNumber(batchNumber), sentences(std::move(sentences)) {}
 
+  // Overloads std::swap for PCQueue such that unique_ptr move is managed with
+  // swap.  Using non-swapped versions lead to multiple copies and is not
+  // interoperable with unique_ptr
   friend void swap(PCItem &a, PCItem &b) {
     using std::swap;
     swap(a.batchNumber, b.batchNumber);
     swap(a.sentences, b.sentences);
   }
 
+  // Convenience function to determine poison.
   bool isPoison() { return (batchNumber == -1); }
 };
 

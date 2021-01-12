@@ -23,7 +23,11 @@ void Batcher::addSentenceWithPriority(RequestSentence &sentence) {
 }
 
 void Batcher::cleave_batch(RequestSentences &sentences) {
-  /* Temporary stub, needs improvement this section */
+  // For now simply iterates on buckets and converts batches greedily.  This
+  // has to be enhanced with optimizing over priority. The baseline
+  // implementation should at least be as fast as marian's maxi-batch with full
+  // corpus size as maxi-batch size.
+
   int segments_added = 0;
   int current_input_tokens = 0;
   int padded_batch_size = 0;
