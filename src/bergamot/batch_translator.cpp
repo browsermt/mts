@@ -9,8 +9,7 @@ BatchTranslator::BatchTranslator(DeviceId const device,
                                  PCQueue<PCItem> &pcqueue, Ptr<Options> options)
     : device_(device), options_(options), pcqueue_(&pcqueue) {
 
-  ABORT_IF(thread_ != NULL, "Don't call start on a running worker!");
-  thread_.reset(new std::thread([this] { this->mainloop(); }));
+  thread_ = std::thread([this] { this->mainloop(); });
 }
 
 void BatchTranslator::initGraph() {
@@ -110,13 +109,13 @@ void BatchTranslator::translate(RequestSentences &requestSentences,
 
 void BatchTranslator::mainloop() {
   initGraph();
-  while (running_) {
+  while (true) {
     Timer timer;
     PCItem pcitem;
     pcqueue_->ConsumeSwap(pcitem);
     if (pcitem.isPoison()) {
-      running_ = false;
       PLOG(_identifier(), info, "Recieved poison, setting running_ to false");
+      return;
     } else {
       PLOG(_identifier(), info, "consumed item in {}; ", timer.elapsed());
       timer.reset();
@@ -136,8 +135,7 @@ void BatchTranslator::mainloop() {
 
 void BatchTranslator::join() {
   PLOG(_identifier(), info, "Join called on {}", _identifier());
-  thread_->join();
-  thread_.reset();
+  thread_.join();
 }
 
 } // namespace bergamot

@@ -45,8 +45,7 @@ private:
   Ptr<ExpressionGraph> graph_;
   std::vector<Ptr<Scorer>> scorers_;
   Ptr<data::ShortlistGenerator const> slgen_;
-  std::atomic<bool> running_{true};
-  std::unique_ptr<std::thread> thread_;
+  std::thread thread_;
   PCQueue<PCItem> *pcqueue_;
 };
 } // namespace bergamot

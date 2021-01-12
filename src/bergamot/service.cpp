@@ -24,6 +24,7 @@ Service::Service(Ptr<Options> options)
         UNew<BatchTranslator>(deviceId, pcqueue_, options);
 
     // Move worker into container
+    // workers_.emplace_back(BatchTranslator(deviceId, pcqueue_, options));
     workers_.push_back(std::move(batch_translator));
   }
 }
