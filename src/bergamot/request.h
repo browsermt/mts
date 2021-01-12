@@ -40,16 +40,15 @@ private:
   std::atomic<int> counter_;
   std::vector<Ptr<Vocab const>> *vocabs_;
 
-  UPtr<Segments> segments_;
-  UPtr<SourceAlignments> sourceAlignments_;
+  Segments segments_;
+  SourceAlignments sourceAlignments_;
   std::vector<Ptr<History>> histories_;
 
   std::promise<TranslationResult> response_;
 
 public:
   Request(unsigned int, std::vector<Ptr<Vocab const>> &, string_view,
-          UPtr<Segments>, UPtr<SourceAlignments>,
-          std::promise<TranslationResult>);
+          Segments &&, SourceAlignments &&, std::promise<TranslationResult>);
 
   // Obtain the count of tokens in a segment. Used to insert sentence from
   // multiple requests into the corresponding size bucket.

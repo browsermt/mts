@@ -11,29 +11,25 @@ namespace marian {
 namespace bergamot {
 
 Request::Request(unsigned int Id, std::vector<Ptr<Vocab const>> &vocabs,
-                 string_view reference, UPtr<Segments> segments,
-                 UPtr<SourceAlignments> sourceAlignments,
+                 string_view reference, Segments &&segments,
+                 SourceAlignments &&sourceAlignments,
                  std::promise<TranslationResult> translationResultPromise)
     : Id_(Id), vocabs_(&vocabs), reference_(reference),
       segments_(std::move(segments)),
       sourceAlignments_(std::move(sourceAlignments)),
       response_(std::move(translationResultPromise)) {
 
-  counter_ = segments_->size();
-
-  // Set vector<Ptr<History>> to nullptr.
-  for (int i = 0; i < segments_->size(); i++) {
-    histories_.push_back(nullptr);
-  }
+  counter_ = segments_.size();
+  histories_.resize(segments_.size(), nullptr);
 }
 
-int Request::numSegments() const { return segments_->size(); }
+int Request::numSegments() const { return segments_.size(); }
 
 int Request::segmentTokens(int index) const {
-  return (segments_->at(index)).size();
+  return (segments_[index].size());
 }
 
-Segment Request::getSegment(int index) const { return segments_->at(index); }
+Segment Request::getSegment(int index) const { return segments_[index]; }
 
 void Request::processHistory(int index, Ptr<History> history) {
   // Concurrently called by multiple workers as a history from translation is
@@ -49,7 +45,7 @@ void Request::processHistory(int index, Ptr<History> history) {
 
 void Request::completeRequest() {
   TranslationResult translation_result;
-  for (int i = 0; i < segments_->size(); i++) {
+  for (int i = 0; i < segments_.size(); i++) {
     std::string source = vocabs_->front()->decode(getSegment(i));
     translation_result.sources.push_back(source);
 
