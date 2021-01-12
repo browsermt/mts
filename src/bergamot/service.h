@@ -7,6 +7,7 @@
 #include "textops.h"
 #include "translation_result.h"
 
+#include <queue>
 #include <vector>
 
 #include "data/types.h"
@@ -31,6 +32,7 @@ private:
   std::atomic<bool> running_;
   unsigned int requestId_;
   unsigned int batchNumber_;
+  std::queue<UPtr<Request>> requests_;
 };
 
 } // namespace bergamot

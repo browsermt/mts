@@ -41,14 +41,16 @@ std::future<TranslationResult> Service::queue(const string_view &input) {
   std::promise<TranslationResult> translationResultPromise;
   auto future = translationResultPromise.get_future();
 
-  Ptr<Request> request = New<Request>(
+  UPtr<Request> request = UNew<Request>(
       requestId_++, vocabs_, input, std::move(segments),
       std::move(sourceAlignments), std::move(translationResultPromise));
 
   for (int i = 0; i < request->numSegments(); i++) {
-    RequestSentence requestSentence(i, request);
+    RequestSentence requestSentence(i, *request.get());
     batcher_.addSentenceWithPriority(requestSentence);
   }
+
+  requests_.push(std::move(request));
 
   UPtr<RequestSentences> batchSentences;
 

@@ -69,10 +69,10 @@ public:
 class RequestSentence {
 private:
   int index_;
-  Ptr<Request> request_;
+  Request *request_;
 
 public:
-  RequestSentence(int, Ptr<Request>);
+  RequestSentence(int, Request &);
   int numTokens();
   Segment getUnderlyingSegment() const;
   void completeSentence(Ptr<History>);
