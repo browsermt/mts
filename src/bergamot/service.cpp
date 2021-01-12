@@ -10,20 +10,18 @@ namespace bergamot {
 
 Service::Service(Ptr<Options> options)
     : text_processor_(options), batcher_(options), running_(true),
-      requestId_(0), batchNumber_(0) {
-
-  int num_workers = options->get<int>("cpu-threads");
+      requestId_(0), batchNumber_(0),
+      numWorkers_(options->get<int>("cpu-threads")), pcqueue_(2 * numWorkers_) {
 
   // Load vocabulary, to be shared among workers and tokenizer.
   vocabs_ = loadVocabularies(options);
-  pcqueue_ = UNew<PCQueue<PCItem>>(2 * num_workers);
-  workers_.reserve(num_workers);
+  workers_.reserve(numWorkers_);
 
-  for (int i = 0; i < num_workers; i++) {
+  for (int i = 0; i < numWorkers_; i++) {
     // Initialize worker
     marian::DeviceId deviceId(i, DeviceType::cpu);
     UPtr<BatchTranslator> batch_translator =
-        UNew<BatchTranslator>(deviceId, *pcqueue_.get(), options);
+        UNew<BatchTranslator>(deviceId, pcqueue_, options);
 
     // Move worker into container
     workers_.push_back(std::move(batch_translator));
@@ -68,7 +66,7 @@ std::future<TranslationResult> Service::queue(const string_view &input) {
 
     if (numSentences > 0) {
       PCItem pcitem(batchNumber_++, std::move(batchSentences));
-      pcqueue_->ProduceSwap(pcitem);
+      pcqueue_.ProduceSwap(pcitem);
       PLOG("main", info, "Batch {} generated", batchNumber_ - 1);
     }
   } while (numSentences > 0);
@@ -85,7 +83,7 @@ void Service::stop() {
     int counter = 0;
     for (auto &worker : workers_) {
       PCItem pcitem;
-      pcqueue_->ProduceSwap(pcitem);
+      pcqueue_.ProduceSwap(pcitem);
       PLOG("main", info, "Adding poison {}", counter);
       ++counter;
     }

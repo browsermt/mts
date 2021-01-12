@@ -27,12 +27,13 @@ private:
   std::vector<Ptr<Vocab const>> vocabs_;
   TextProcessor text_processor_;
   Batcher batcher_;
-  UPtr<PCQueue<PCItem>> pcqueue_;
+  PCQueue<PCItem> pcqueue_;
   std::vector<UPtr<BatchTranslator>> workers_;
   std::atomic<bool> running_;
   unsigned int requestId_;
   unsigned int batchNumber_;
   std::queue<UPtr<Request>> requests_;
+  int numWorkers_;
 };
 
 } // namespace bergamot
