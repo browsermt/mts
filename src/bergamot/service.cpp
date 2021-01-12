@@ -9,9 +9,9 @@ namespace marian {
 namespace bergamot {
 
 Service::Service(Ptr<Options> options)
-    : text_processor_(options), batcher_(options), running_(true),
-      requestId_(0), batchNumber_(0),
-      numWorkers_(options->get<int>("cpu-threads")), pcqueue_(2 * numWorkers_) {
+    : text_processor_(options), batcher_(options), requestId_(0),
+      batchNumber_(0), numWorkers_(options->get<int>("cpu-threads")),
+      pcqueue_(2 * numWorkers_) {
 
   // Load vocabulary, to be shared among workers and tokenizer.
   vocabs_ = loadVocabularies(options);
@@ -79,25 +79,23 @@ std::future<TranslationResult> Service::translate(const string_view &input) {
 }
 
 void Service::stop() {
-  if (running_) {
-    int counter = 0;
-    for (auto &worker : workers_) {
-      PCItem pcitem;
-      pcqueue_.ProduceSwap(pcitem);
-      PLOG("main", info, "Adding poison {}", counter);
-      ++counter;
-    }
-
-    counter = 0;
-    for (auto &worker : workers_) {
-      PLOG("main", info, "Joining worker {}", counter);
-      worker->join();
-      PLOG("main", info, "Joined worker {}", counter);
-      ++counter;
-    }
-
-    running_ = false;
+  int counter = 0;
+  for (auto &worker : workers_) {
+    PCItem pcitem;
+    pcqueue_.ProduceSwap(pcitem);
+    PLOG("main", info, "Adding poison {}", counter);
+    ++counter;
   }
+
+  counter = 0;
+  for (auto &worker : workers_) {
+    PLOG("main", info, "Joining worker {}", counter);
+    worker->join();
+    PLOG("main", info, "Joined worker {}", counter);
+    ++counter;
+  }
+
+  workers_.clear(); // Takes care of idempotency.
 }
 
 Service::~Service() { stop(); }

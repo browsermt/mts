@@ -29,7 +29,6 @@ private:
   Batcher batcher_;
   PCQueue<PCItem> pcqueue_;
   std::vector<UPtr<BatchTranslator>> workers_;
-  std::atomic<bool> running_;
   unsigned int requestId_;
   unsigned int batchNumber_;
   std::queue<UPtr<Request>> requests_;
