@@ -11,7 +11,7 @@ namespace bergamot {
 Service::Service(Ptr<Options> options)
     : text_processor_(options), batcher_(options), requestId_(0),
       batchNumber_(0), numWorkers_(options->get<int>("cpu-threads")),
-      pcqueue_(2 * numWorkers_) {
+      pcqueue_(2 * options->get<int>("cpu-threads")) {
 
   // Load vocabulary, to be shared among workers and tokenizer.
   vocabs_ = loadVocabularies(options);
