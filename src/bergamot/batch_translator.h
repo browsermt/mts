@@ -1,53 +1,51 @@
-#ifndef __BERGAMOT_BATCH_TRANSLATOR_H
-#define __BERGAMOT_BATCH_TRANSLATOR_H
+#ifndef SRC_BERGAMOT_BATCH_TRANSLATOR_H_
+#define SRC_BERGAMOT_BATCH_TRANSLATOR_H_
 
-#include <atomic>
-#include <ctime>
-#include <functional>
-#include <map>
 #include <string>
 #include <vector>
 
-#include "common/logging.h"
 #include "common/utils.h"
-#include "data/batch_generator.h"
-#include "data/corpus.h"
 #include "data/shortlist.h"
-#include "data/text_input.h"
 #include "definitions.h"
 #include "pcqueue.h"
 #include "request.h"
-#include "translator/beam_search.h"
 #include "translator/history.h"
 #include "translator/scorers.h"
-
-#include "sanelogging.h"
 
 namespace marian {
 namespace bergamot {
 
 class BatchTranslator {
+  // Launches minimal marian-translation (only CPU at the moment) in individual
+  // threads. Constructor launches each worker thread running mainloop().
+  // mainloop runs until until it receives poison from the PCQueue. Threads are
+  // shut down in Service which calls join() on the threads.
+
 public:
   BatchTranslator(DeviceId const device, PCQueue<PCItem> &pcqueue,
                   Ptr<Options> options);
-
-  void initGraph();
-  void translate(RequestSentences &, Histories &);
-  void mainloop();
-  std::string _identifier() { return "worker" + std::to_string(device_.no); }
   void join();
 
+  // convenience function for logging. TODO(jerin)
+  std::string _identifier() { return "worker" + std::to_string(device_.no); }
+
 private:
+  void initGraph();
+  void translate(RequestSentences &requestSentences, Histories &histories);
+  void mainloop();
+
   Ptr<Options> options_;
+
   DeviceId device_;
   std::vector<Ptr<Vocab const>> vocabs_;
   Ptr<ExpressionGraph> graph_;
   std::vector<Ptr<Scorer>> scorers_;
   Ptr<data::ShortlistGenerator const> slgen_;
-  std::thread thread_;
+
   PCQueue<PCItem> *pcqueue_;
+  std::thread thread_;
 };
 } // namespace bergamot
 } // namespace marian
 
-#endif //  __BERGAMOT_BATCH_TRANSLATOR_H
+#endif //  SRC_BERGAMOT_BATCH_TRANSLATOR_H_

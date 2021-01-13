@@ -1,5 +1,10 @@
 #include "batch_translator.h"
+#include "common/logging.h"
+#include "data/corpus.h"
+#include "data/text_input.h"
+#include "sanelogging.h"
 #include "timer.h"
+#include "translator/beam_search.h"
 #include "utils.h"
 
 namespace marian {

@@ -1,5 +1,6 @@
 #include "service.h"
 #include "definitions.h"
+#include "sanelogging.h"
 
 #include "utils.h"
 #include <string>
@@ -9,26 +10,34 @@ namespace marian {
 namespace bergamot {
 
 Service::Service(Ptr<Options> options)
-    : text_processor_(options), batcher_(options), requestId_(0),
-      batchNumber_(0), numWorkers_(options->get<int>("cpu-threads")),
-      pcqueue_(2 * options->get<int>("cpu-threads")) {
+    : requestId_(0), batchNumber_(0),
+      numWorkers_(options->get<int>("cpu-threads")), text_processor_(options),
+      batcher_(options), pcqueue_(2 * options->get<int>("cpu-threads")) {
 
-  // Load vocabulary, to be shared among workers and tokenizer.
   vocabs_ = loadVocabularies(options);
   workers_.reserve(numWorkers_);
 
   for (int i = 0; i < numWorkers_; i++) {
-    // Initialize worker
     marian::DeviceId deviceId(i, DeviceType::cpu);
     UPtr<BatchTranslator> batch_translator =
         UNew<BatchTranslator>(deviceId, pcqueue_, options);
 
-    // Move worker into container
     workers_.push_back(std::move(batch_translator));
   }
 }
 
-std::future<TranslationResult> Service::queue(const string_view &input) {
+std::future<TranslationResult> Service::translate(const string_view &input) {
+  // Takes in a blob of text. Segments and SourceAlignments are extracted from
+  // the input (blob of text) and used to construct a Request along with a
+  // promise. promise value is set by the worker completing a request.
+  //
+  // Batcher, which currently runs on the main thread constructs batches out of
+  // a single request (at the moment) and adds them into a Producer-Consumer
+  // queue holding a bunch of requestSentences used to construct batches.
+  // TODO(jerin): Make asynchronous and compile from multiple requests.
+  //
+  // returns future corresponding to the promise.
+
   Segments segments;
   SourceAlignments sourceAlignments;
   text_processor_.query_to_segments(input, segments, sourceAlignments);
@@ -60,10 +69,6 @@ std::future<TranslationResult> Service::queue(const string_view &input) {
   } while (numSentences > 0);
 
   return future;
-}
-
-std::future<TranslationResult> Service::translate(const string_view &input) {
-  return queue(input);
 }
 
 void Service::stop() {

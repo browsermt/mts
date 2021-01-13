@@ -17,22 +17,21 @@ namespace bergamot {
 
 class Service {
 public:
-  explicit Service(Ptr<Options>);
-  std::future<TranslationResult> queue(const string_view &input);
+  explicit Service(Ptr<Options> options);
   std::future<TranslationResult> translate(const string_view &input);
   void stop();
   ~Service();
 
 private:
+  unsigned int requestId_;
+  unsigned int batchNumber_;
+  int numWorkers_;
+
   std::vector<Ptr<Vocab const>> vocabs_;
   TextProcessor text_processor_;
   Batcher batcher_;
   PCQueue<PCItem> pcqueue_;
   std::vector<UPtr<BatchTranslator>> workers_;
-  unsigned int requestId_;
-  unsigned int batchNumber_;
-  std::queue<UPtr<Request>> requests_;
-  int numWorkers_;
 };
 
 } // namespace bergamot
