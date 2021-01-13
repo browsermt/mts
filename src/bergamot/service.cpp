@@ -45,16 +45,15 @@ std::future<TranslationResult> Service::queue(const string_view &input) {
     batcher_.addSentenceWithPriority(requestSentence);
   }
 
-  UPtr<RequestSentences> batchSentences;
   int numSentences;
   do {
-    batchSentences = UNew<std::vector<RequestSentence>>();
-    batcher_.cleave_batch(*batchSentences.get());
-
-    numSentences = batchSentences->size();
+    RequestSentences batchSentences;
+    batcher_.cleave_batch(batchSentences);
+    numSentences = batchSentences.size();
 
     if (numSentences > 0) {
       PCItem pcitem(batchNumber_++, std::move(batchSentences));
+      PLOG("main", info, "Batch {} generating", batchNumber_ - 1);
       pcqueue_.ProduceSwap(pcitem);
       PLOG("main", info, "Batch {} generated", batchNumber_ - 1);
     }

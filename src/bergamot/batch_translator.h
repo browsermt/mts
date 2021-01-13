@@ -28,7 +28,6 @@ namespace bergamot {
 
 class BatchTranslator {
 public:
-  BatchTranslator(const BatchTranslator &) = default;
   BatchTranslator(DeviceId const device, PCQueue<PCItem> &pcqueue,
                   Ptr<Options> options);
 

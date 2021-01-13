@@ -120,13 +120,13 @@ void BatchTranslator::mainloop() {
       PLOG(_identifier(), info, "consumed item in {}; ", timer.elapsed());
       timer.reset();
       Histories histories;
-      translate(*pcitem.sentences.get(), histories);
+      translate(pcitem.sentences, histories);
       PLOG(_identifier(), info, "translated batch {} in {}; ",
            pcitem.batchNumber, timer.elapsed());
       timer.reset();
-      for (int i = 0; i < (pcitem.sentences)->size(); i++) {
-        Ptr<History> history = histories.at(i);
-        RequestSentence requestSentence = pcitem.sentences->at(i);
+      for (int i = 0; i < pcitem.sentences.size(); i++) {
+        Ptr<History> history = histories[i];
+        RequestSentence requestSentence = pcitem.sentences[i];
         requestSentence.completeSentence(history);
       }
     }

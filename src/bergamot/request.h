@@ -90,14 +90,14 @@ typedef std::vector<RequestSentence> RequestSentences;
 
 struct PCItem {
   int batchNumber;
-  UPtr<RequestSentences> sentences;
+  RequestSentences sentences;
 
   // PCItem should be default constructible. Default constructed element is
   // poison.
-  PCItem() : batchNumber(-1), sentences(nullptr) {}
+  PCItem() : batchNumber(-1) {}
 
   // PCItem constructor to construct a legit PCItem.
-  PCItem(int batchNumber, UPtr<RequestSentences> sentences)
+  PCItem(int batchNumber, RequestSentences &&sentences)
       : batchNumber(batchNumber), sentences(std::move(sentences)) {}
 
   // Overloads std::swap for PCQueue such that unique_ptr move is managed with
@@ -106,7 +106,11 @@ struct PCItem {
   friend void swap(PCItem &a, PCItem &b) {
     using std::swap;
     swap(a.batchNumber, b.batchNumber);
-    swap(a.sentences, b.sentences);
+
+    // Swap with move.
+    RequestSentences tmp(std::move(a.sentences));
+    a.sentences = std::move(b.sentences);
+    b.sentences = std::move(tmp);
   }
 
   // Convenience function to determine poison.
