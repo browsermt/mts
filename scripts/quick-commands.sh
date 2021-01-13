@@ -10,7 +10,7 @@ COMMON_ARGS=(
     --ssplit-mode paragraph
     --beam-size 1 --skip-cost # Sets mode to translation, what does this do?
     --shortlist ../models/enes/lex.s2t.gz 50 50
-    --queue-timeout 5 # ms timeout
+    # --queue-timeout 5 # ms timeout
     --int8shiftAlphaAll # What does this do?
 )
 
@@ -18,10 +18,10 @@ function bergamot {
     set -x;
     BERGAMOT_ARGS=(
         "${COMMON_ARGS[@]}"
-        --cpu-threads 5
+        --cpu-threads 28
         --log-level all
         --max-input-sentence-tokens 128
-        --max-input-tokens 2048
+        --max-input-tokens 512
     )
     ./main ${BERGAMOT_ARGS[@]};
     set +x;
@@ -49,9 +49,9 @@ function bergamot-profile {
 
 function run-combos {
     MAX_INPUT_TOKENS="128"
-    for THREAD in {8..1}
+    for THREAD in 28 20 24 16 12 8 4 2 1
     do
-        for BATCH_TOKENS in 512 1024 2048 4096
+        for BATCH_TOKENS in 128 256 512 1024 
         do 
             bergamot-profile $THREAD $MAX_INPUT_TOKENS $BATCH_TOKENS;
         done;

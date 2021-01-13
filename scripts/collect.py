@@ -3,9 +3,9 @@ import re
 
 if __name__ == '__main__':
     pattern = re.compile("real\t([0-9ms\.]*)")
-    for batchsize in [512, 1024, 2048, 4096]:
+    for batchsize in [256, 512, 1024]:
         threads_entries = []
-        for thread in range(1, 8+1):
+        for thread in [1, 2, 4, 8, 16, 24, 28]:
             for max_token in [128]:
                 fname = f"threads({thread})_batch_tokens({batchsize})_max_input_sentence_tokens({max_token}).time.txt"
                 with open(fname) as fp:
@@ -23,7 +23,8 @@ if __name__ == '__main__':
                     threads_entries.append(time)
                     
                     # print('\t'.join(row))
-        row = map(str, threads_entries)
+        fmt = lambda x: '{:.2f}'.format(x)
+        row = map(fmt, threads_entries)
         print('\t'.join(row))
 
 
