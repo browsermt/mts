@@ -45,15 +45,15 @@ function bergamot-profile {
 
     TAG="threads(${THREADS})_batch_tokens($BATCH_TOKENS)_max_input_sentence_tokens($MAX_INPUT_TOKENS)"
     echo $TAG;
-    { time ./main ${COMMON_ARGS[@]} ${PROFILE_ARGS[@]} < moby10b.txt;}  &> $BENCHMARK_OUTPUTS/$TAG.time.txt ;
-    gprof ./main gmon.out > $BENCHMARK_OUTPUTS/$TAG.analysis.txt;
+    { time ./main ${COMMON_ARGS[@]} ${PROFILE_ARGS[@]} < ../assets/moby-dick/moby10b.concat.txt;}  &> $BENCHMARK_OUTPUTS/$TAG.time.txt ;
+    # gprof ./main gmon.out > $BENCHMARK_OUTPUTS/$TAG.analysis.txt;
 }
 
 function run-combos {
     MAX_INPUT_TOKENS="128"
-    for THREAD in 28 20 24 16 12 8 4 2 1
+    for THREAD in 28 24 20 16 12 8 4 2 1
     do
-        for BATCH_TOKENS in 128 256 512 1024 
+        for BATCH_TOKENS in 2048 1024 512 256 128
         do 
             bergamot-profile $THREAD $MAX_INPUT_TOKENS $BATCH_TOKENS;
         done;
