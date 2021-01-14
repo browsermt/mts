@@ -7,22 +7,17 @@ namespace marian {
 namespace bergamot {
 
 Batcher::Batcher(Ptr<Options> options) {
-  /* Reads options for batch configuration */
   max_input_tokens_ = options->get<int>("max-input-tokens");
-  max_input_sentence_tokens_ = options->get<int>("max-input-sentence-tokens");
-  bucket.reserve(max_input_sentence_tokens_ + 1);
-  for (int i = 0; i <= max_input_sentence_tokens_; i++) {
-    bucket.push_back(std::set<RequestSentence>());
-  }
+  bucket_.resize(options->get<int>("max-input-sentence-tokens") + 1);
 }
 
 void Batcher::addSentenceWithPriority(RequestSentence &sentence) {
   int bucket_id = sentence.numTokens();
-  assert(bucket_id <= max_input_sentence_tokens_);
-  bucket[bucket_id].insert(sentence);
+  assert(bucket_id < bucket_.size());
+  bucket_[bucket_id].insert(sentence);
 }
 
-void Batcher::cleave_batch(RequestSentences &sentences) {
+void Batcher::cleaveBatch(RequestSentences &sentences) {
   // For now simply iterates on buckets and converts batches greedily.  This
   // has to be enhanced with optimizing over priority. The baseline
   // implementation should at least be as fast as marian's maxi-batch with full
@@ -32,9 +27,10 @@ void Batcher::cleave_batch(RequestSentences &sentences) {
   int current_input_tokens = 0;
   int padded_batch_size = 0;
   int prev_padded_batch_size;
-  for (int i = 0; i < bucket.size(); i++) {
-    auto p = bucket[i].begin();
-    while (p != bucket[i].end()) {
+
+  for (int i = 0; i < bucket_.size(); i++) {
+    auto p = bucket_[i].begin();
+    while (p != bucket_[i].end()) {
       padded_batch_size = (segments_added + 1) * i;
       if (padded_batch_size < max_input_tokens_) {
         auto q = p;
@@ -42,7 +38,7 @@ void Batcher::cleave_batch(RequestSentences &sentences) {
         current_input_tokens += i;
         sentences.push_back(*q);
         ++segments_added;
-        bucket[i].erase(q);
+        bucket_[i].erase(q);
         prev_padded_batch_size = padded_batch_size;
       } else {
         PLOG("main", info, "New batch generated; {} Segments added;",

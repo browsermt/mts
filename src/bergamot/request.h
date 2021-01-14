@@ -48,24 +48,26 @@ private:
 
 public:
   Request(unsigned int, std::vector<Ptr<Vocab const>> &, string_view,
-          Segments &&, SourceAlignments &&, std::promise<TranslationResult>);
+          Segments &&segments, SourceAlignments &&sourceAlignments,
+          std::promise<TranslationResult> translationResultPromise);
 
-  // Obtain the count of tokens in a segment. Used to insert sentence from
-  // multiple requests into the corresponding size bucket.
-  int segmentTokens(int) const;
+  // Obtain the count of tokens in the segment correponding to index. Used to
+  // insert sentence from multiple requests into the corresponding size bucket.
+  int segmentTokens(int index) const;
 
   // Obtain number of segments in a request.
   int numSegments() const;
 
-  // Obtains a segment to create a batch of segments among several requests.
-  Segment getSegment(int) const;
+  // Obtains segment corresponding to index  to create a batch of segments among
+  // several requests.
+  Segment getSegment(int index) const;
 
   // For notions of priority among requests (used to enable <set> in Batcher).
-  bool operator<(const Request &) const;
+  bool operator<(const Request &request) const;
 
   // Processes a history obtained after translating in a heterogenous batch
   // compiled from requests.
-  void processHistory(int index, Ptr<History>);
+  void processHistory(int index, Ptr<History> history);
 
   // On completion of last segment, sets value of the promise.
   void completeRequest();
@@ -82,8 +84,8 @@ public:
   // Returns token in Segment corresponding to index.
   int numTokens();
   Segment getUnderlyingSegment() const;
-  void completeSentence(Ptr<History>);
-  friend bool operator<(const RequestSentence &, const RequestSentence &);
+  void completeSentence(Ptr<History> history);
+  friend bool operator<(const RequestSentence &a, const RequestSentence &b);
 };
 
 typedef std::vector<RequestSentence> RequestSentences;

@@ -54,7 +54,7 @@ std::future<TranslationResult> Service::translate(const string_view &input) {
   int numSentences;
   do {
     RequestSentences batchSentences;
-    batcher_.cleave_batch(batchSentences);
+    batcher_.cleaveBatch(batchSentences);
     numSentences = batchSentences.size();
 
     if (numSentences > 0) {

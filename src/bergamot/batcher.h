@@ -12,14 +12,21 @@
 namespace marian {
 namespace bergamot {
 class Batcher {
-  unsigned int max_input_tokens_;
-  unsigned int max_input_sentence_tokens_;
-  std::vector<std::set<RequestSentence>> bucket;
-
 public:
   explicit Batcher(Ptr<Options> options);
-  void addSentenceWithPriority(RequestSentence &);
-  void cleave_batch(RequestSentences &);
+
+  // RequestSentence incorporates (tentative) notions of priority with each
+  // sentence. This method inserts the sentence into the internal data-structure
+  // which maintains priority among sentences from multiple concurrent requests.
+  void addSentenceWithPriority(RequestSentence &sentence);
+
+  // Loads sentences with sentences compiled from (tentatively) multiple
+  // requests optimizing for both padding and priority.
+  void cleaveBatch(RequestSentences &sentences);
+
+private:
+  unsigned int max_input_tokens_;
+  std::vector<std::set<RequestSentence>> bucket_;
 };
 
 } // namespace bergamot
