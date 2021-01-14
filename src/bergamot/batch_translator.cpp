@@ -106,7 +106,7 @@ void BatchTranslator::translate(RequestSentences &requestSentences,
   auto trgVocab = vocabs_.back();
   auto search = New<BeamSearch>(options_, scorers_, trgVocab);
 
-  histories = search->search(graph_, batch);
+  histories = std::move(search->search(graph_, batch));
   PLOG(_identifier(), info, "BeamSearch completed in {}; ", timer.elapsed());
 
   timer.reset();
@@ -130,9 +130,7 @@ void BatchTranslator::mainloop() {
            pcitem.batchNumber, timer.elapsed());
       timer.reset();
       for (int i = 0; i < pcitem.sentences.size(); i++) {
-        Ptr<History> history = histories[i];
-        RequestSentence requestSentence = pcitem.sentences[i];
-        requestSentence.completeSentence(history);
+        pcitem.sentences[i].completeSentence(histories[i]);
       }
     }
   }
