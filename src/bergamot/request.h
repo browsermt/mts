@@ -92,26 +92,13 @@ struct PCItem {
   int batchNumber;
   RequestSentences sentences;
 
-  // PCItem should be default constructible. Default constructed element is
-  // poison.
+  // PCItem should be default constructible for PCQueue. Default constructed
+  // element is poison.
   PCItem() : batchNumber(-1) {}
 
   // PCItem constructor to construct a legit PCItem.
-  PCItem(int batchNumber, RequestSentences &&sentences)
+  explicit PCItem(int batchNumber, RequestSentences &&sentences)
       : batchNumber(batchNumber), sentences(std::move(sentences)) {}
-
-  // Overloads std::swap for PCQueue such that unique_ptr move is managed with
-  // swap.  Using non-swapped versions lead to multiple copies and is not
-  // interoperable with unique_ptr
-  friend void swap(PCItem &a, PCItem &b) {
-    using std::swap;
-    swap(a.batchNumber, b.batchNumber);
-
-    // Swap with move.
-    RequestSentences tmp(std::move(a.sentences));
-    a.sentences = std::move(b.sentences);
-    b.sentences = std::move(tmp);
-  }
 
   // Convenience function to determine poison.
   bool isPoison() { return (batchNumber == -1); }
