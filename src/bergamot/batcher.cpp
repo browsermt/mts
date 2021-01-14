@@ -32,7 +32,7 @@ void Batcher::cleaveBatch(RequestSentences &sentences) {
     auto p = bucket_[i].begin();
     while (p != bucket_[i].end()) {
       padded_batch_size = (segments_added + 1) * i;
-      if (padded_batch_size < max_input_tokens_) {
+      if (padded_batch_size <= max_input_tokens_) {
         auto q = p;
         ++p;
         current_input_tokens += i;
