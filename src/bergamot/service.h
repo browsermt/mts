@@ -31,7 +31,7 @@ private:
   TextProcessor text_processor_;
   Batcher batcher_;
   PCQueue<PCItem> pcqueue_;
-  std::vector<UPtr<BatchTranslator>> workers_;
+  std::vector<BatchTranslator> workers_;
 };
 
 } // namespace bergamot

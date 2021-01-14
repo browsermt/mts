@@ -19,10 +19,7 @@ Service::Service(Ptr<Options> options)
 
   for (int i = 0; i < numWorkers_; i++) {
     marian::DeviceId deviceId(i, DeviceType::cpu);
-    UPtr<BatchTranslator> batch_translator =
-        UNew<BatchTranslator>(deviceId, pcqueue_, options);
-
-    workers_.push_back(std::move(batch_translator));
+    workers_.emplace_back(deviceId, pcqueue_, options);
   }
 }
 
@@ -83,7 +80,7 @@ void Service::stop() {
   counter = 0;
   for (auto &worker : workers_) {
     PLOG("main", info, "Joining worker {}", counter);
-    worker->join();
+    worker.join();
     PLOG("main", info, "Joined worker {}", counter);
     ++counter;
   }
