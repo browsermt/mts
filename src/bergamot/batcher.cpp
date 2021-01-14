@@ -41,10 +41,6 @@ void Batcher::cleaveBatch(RequestSentences &sentences) {
         bucket_[i].erase(q);
         prev_padded_batch_size = padded_batch_size;
       } else {
-        PLOG("main", info, "New batch generated; {} Segments added;",
-             segments_added);
-        PLOG("main", info, "padded_batch_size ({}) current_input_tokens({})",
-             prev_padded_batch_size, current_input_tokens);
         return;
       }
     }

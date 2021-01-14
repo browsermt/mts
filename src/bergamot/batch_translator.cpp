@@ -48,7 +48,6 @@ void BatchTranslator::translate(RequestSentences &requestSentences,
                                 Histories &histories) {
   int id = 0;
   std::vector<data::SentenceTuple> batchVector;
-  Timer timer;
 
   for (auto &sentence : requestSentences) {
     data::SentenceTuple sentence_tuple(id);
@@ -58,8 +57,6 @@ void BatchTranslator::translate(RequestSentences &requestSentences,
     id++;
   }
 
-  PLOG(_identifier(), info, "batchVector created in {}; ", timer.elapsed());
-  timer.reset();
   size_t batchSize = batchVector.size();
   std::vector<size_t> sentenceIds;
   std::vector<int> maxDims;
@@ -81,9 +78,6 @@ void BatchTranslator::translate(RequestSentences &requestSentences,
     subBatches.emplace_back(New<SubBatch>(batchSize, maxDims[j], vocabs_[j]));
   }
 
-  PLOG(_identifier(), info, "subBatches created in {}; ", timer.elapsed());
-  timer.reset();
-
   std::vector<size_t> words(maxDims.size(), 0);
   for (size_t i = 0; i < batchSize; ++i) {
     for (size_t j = 0; j < maxDims.size(); ++j) {
@@ -100,35 +94,25 @@ void BatchTranslator::translate(RequestSentences &requestSentences,
 
   auto batch = Ptr<CorpusBatch>(new CorpusBatch(subBatches));
   batch->setSentenceIds(sentenceIds);
-  PLOG(_identifier(), info, "corpusBatch created in {}; ", timer.elapsed());
-  timer.reset();
 
   auto trgVocab = vocabs_.back();
   auto search = New<BeamSearch>(options_, scorers_, trgVocab);
 
   histories = std::move(search->search(graph_, batch));
-  PLOG(_identifier(), info, "BeamSearch completed in {}; ", timer.elapsed());
-
-  timer.reset();
 }
 
 void BatchTranslator::mainloop() {
   initGraph();
+
+  PCItem pcitem;
+  Histories histories;
+
   while (true) {
-    Timer timer;
-    PCItem pcitem;
     pcqueue_->ConsumeSwap(pcitem);
     if (pcitem.isPoison()) {
-      PLOG(_identifier(), info, "Recieved poison, setting running_ to false");
       return;
     } else {
-      PLOG(_identifier(), info, "consumed item in {}; ", timer.elapsed());
-      timer.reset();
-      Histories histories;
       translate(pcitem.sentences, histories);
-      PLOG(_identifier(), info, "translated batch {} in {}; ",
-           pcitem.batchNumber, timer.elapsed());
-      timer.reset();
       for (int i = 0; i < pcitem.sentences.size(); i++) {
         pcitem.sentences[i].completeSentence(histories[i]);
       }
@@ -136,10 +120,7 @@ void BatchTranslator::mainloop() {
   }
 }
 
-void BatchTranslator::join() {
-  PLOG(_identifier(), info, "Join called on {}", _identifier());
-  thread_.join();
-}
+void BatchTranslator::join() { thread_.join(); }
 
 } // namespace bergamot
 } // namespace marian

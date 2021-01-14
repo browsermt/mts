@@ -59,9 +59,7 @@ std::future<TranslationResult> Service::translate(const string_view &input) {
 
     if (numSentences > 0) {
       PCItem pcitem(batchNumber_++, std::move(batchSentences));
-      PLOG("main", info, "Batch {} generating", batchNumber_ - 1);
       pcqueue_.ProduceSwap(pcitem);
-      PLOG("main", info, "Batch {} generated", batchNumber_ - 1);
     }
   } while (numSentences > 0);
 
@@ -73,15 +71,12 @@ void Service::stop() {
   for (auto &worker : workers_) {
     PCItem pcitem;
     pcqueue_.ProduceSwap(pcitem);
-    PLOG("main", info, "Adding poison {}", counter);
     ++counter;
   }
 
   counter = 0;
   for (auto &worker : workers_) {
-    PLOG("main", info, "Joining worker {}", counter);
     worker.join();
-    PLOG("main", info, "Joined worker {}", counter);
     ++counter;
   }
 
