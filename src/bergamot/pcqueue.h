@@ -1,5 +1,5 @@
-#ifndef UTIL_PCQUEUE_H
-#define UTIL_PCQUEUE_H
+#ifndef SRC_BERGAMOT_PCQUEUE_H_
+#define SRC_BERGAMOT_PCQUEUE_H_
 
 #include "common/logging.h"
 
@@ -296,4 +296,4 @@ private:
 } // namespace bergamot
 } // namespace marian
 
-#endif // UTIL_PCQUEUE_H
+#endif // SRC_BERGAMOT_PCQUEUE_H_

@@ -1,5 +1,5 @@
-#ifndef __BERGAMOT_TEXTOPS_H
-#define __BERGAMOT_TEXTOPS_H
+#ifndef SRC_BERGAMOT_TEXTOPS_H_
+#define SRC_BERGAMOT_TEXTOPS_H_
 
 #include "common/definitions.h"
 #include "common/logging.h"
@@ -56,4 +56,4 @@ public:
 } // namespace bergamot
 } // namespace marian
 
-#endif // __BERGAMOT_TEXTOPS_H
+#endif // SRC_BERGAMOT_TEXTOPS_H_

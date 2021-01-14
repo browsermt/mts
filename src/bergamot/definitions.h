@@ -1,5 +1,5 @@
-#ifndef __BERGAMOT_DEFINITIONS_H
-#define __BERGAMOT_DEFINITIONS_H
+#ifndef SRC_BERGAMOT_DEFINITIONS_H_
+#define SRC_BERGAMOT_DEFINITIONS_H_
 
 #include "data/types.h"
 #include "data/vocab_base.h"
@@ -24,4 +24,4 @@ template <class T> UPtr<T> UNew(UPtr<T> p) { return UPtr<T>(p); }
 } // namespace bergamot
 } // namespace marian
 
-#endif // __BERGAMOT_DEFINITIONS_H
+#endif // SRC_BERGAMOT_DEFINITIONS_H_

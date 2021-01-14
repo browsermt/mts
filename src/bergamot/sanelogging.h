@@ -1,5 +1,5 @@
-#ifndef __BERGAMOT_SANELOGGING_H
-#define __BERGAMOT_SANELOGGING_H
+#ifndef SRC_BERGAMOT_SANELOGGING_H_
+#define SRC_BERGAMOT_SANELOGGING_H_
 
 #include "spdlog/spdlog.h"
 #include <iostream>
@@ -40,4 +40,4 @@ void checkedPLog(std::string logger, std::string level, Args... args) {
 
 } // namespace marian
 
-#endif // __BERGAMOT_SANELOGGING_H
+#endif // SRC_BERGAMOT_SANELOGGING_H_

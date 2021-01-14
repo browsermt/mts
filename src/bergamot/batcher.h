@@ -1,5 +1,5 @@
-#ifndef __BERGAMOT_BATCHER_H
-#define __BERGAMOT_BATCHER_H
+#ifndef SRC_BERGAMOT_BATCHER_H_
+#define SRC_BERGAMOT_BATCHER_H_
 
 #include "common/options.h"
 #include "data/corpus_base.h"
@@ -25,4 +25,4 @@ public:
 } // namespace bergamot
 } // namespace marian
 
-#endif // __BERGAMOT_BATCHER_H
+#endif // SRC_BERGAMOT_BATCHER_H_
