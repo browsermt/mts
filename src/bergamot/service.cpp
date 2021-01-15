@@ -23,7 +23,7 @@ Service::Service(Ptr<Options> options)
   }
 }
 
-std::future<TranslationResult> Service::translate(const string_view &input) {
+std::future<TranslationResult> Service::translate(string input) {
   // Takes in a blob of text. Segments and SourceAlignments are extracted from
   // the input (blob of text) and used to construct a Request along with a
   // promise. promise value is set by the worker completing a request.
@@ -43,7 +43,7 @@ std::future<TranslationResult> Service::translate(const string_view &input) {
   auto future = translationResultPromise.get_future();
 
   Ptr<Request> request = New<Request>(
-      requestId_++, vocabs_, input, std::move(segments),
+      requestId_++, vocabs_, std::move(input), std::move(segments),
       std::move(sourceAlignments), std::move(translationResultPromise));
 
   for (int i = 0; i < request->numSegments(); i++) {

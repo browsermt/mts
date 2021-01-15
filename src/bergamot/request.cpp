@@ -11,10 +11,10 @@ namespace marian {
 namespace bergamot {
 
 Request::Request(unsigned int Id, std::vector<Ptr<Vocab const>> &vocabs,
-                 string_view reference, Segments &&segments,
+                 std::string &&source, Segments &&segments,
                  SourceAlignments &&sourceAlignments,
                  std::promise<TranslationResult> translationResultPromise)
-    : Id_(Id), vocabs_(&vocabs), reference_(reference),
+    : Id_(Id), vocabs_(&vocabs), source_(std::move(source)),
       segments_(std::move(segments)),
       sourceAlignments_(std::move(sourceAlignments)),
       response_(std::move(translationResultPromise)) {
@@ -44,18 +44,11 @@ void Request::processHistory(int index, Ptr<History> history) {
 }
 
 void Request::completeRequest() {
-  TranslationResult translation_result;
-  for (int i = 0; i < segments_.size(); i++) {
-    std::string source = vocabs_->front()->decode(getSegment(i));
-    translation_result.sources.push_back(source);
-
-    Ptr<History> history = histories_[i];
-    NBestList onebest = history->nBest(1);
-    Result result = onebest[0]; // Expecting only one result;
-    Words words = std::get<0>(result);
-    std::string decoded = vocabs_->back()->decode(words);
-    translation_result.translations.push_back(decoded);
-  }
+  // Request no longer needs to hold the content, can transfer it to
+  // TranslationResult.
+  TranslationResult translation_result(std::move(source_), std::move(segments_),
+                                       std::move(sourceAlignments_),
+                                       std::move(histories_), *vocabs_);
   LOG(info, "Last translation in. Closing request;");
   response_.set_value(translation_result);
 }

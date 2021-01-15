@@ -36,7 +36,7 @@ namespace bergamot {
 class Request {
 private:
   unsigned int Id_;
-  string_view reference_;
+  std::string source_;
   std::atomic<int> counter_;
   std::vector<Ptr<Vocab const>> *vocabs_;
 
@@ -47,7 +47,7 @@ private:
   std::promise<TranslationResult> response_;
 
 public:
-  Request(unsigned int, std::vector<Ptr<Vocab const>> &, string_view,
+  Request(unsigned int, std::vector<Ptr<Vocab const>> &, std::string &&,
           Segments &&segments, SourceAlignments &&sourceAlignments,
           std::promise<TranslationResult> translationResultPromise);
 

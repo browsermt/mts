@@ -1,19 +1,40 @@
 #ifndef SRC_BERGAMOT_TRANSLATION_RESULT_H_
 #define SRC_BERGAMOT_TRANSLATION_RESULT_H_
 
-#include <vector>
+#include "data/types.h"
+#include "definitions.h"
+#include "translator/beam_search.h"
+
+#include <cassert>
 #include <string>
+#include <vector>
 
 namespace marian {
 namespace bergamot {
-struct TranslationResult {
-  /* A simple TranslationResult;
-   * To be modified in the future with all sorts of
-   * complications */
-  std::vector<std::string> sources;
-  std::vector<std::string> translations;
-};
-}  // namespace bergamot
-}  // namespace marian
+class TranslationResult {
+  // TranslationResult class handles post-processing of Request, after
+  // histories have been obtained from translations.
 
-#endif  // SRC_BERGAMOT_TRANSLATION_RESULT_H_
+public:
+  TranslationResult(std::string &&source, Segments &&segments,
+                    SourceAlignments &&sourceAlignments, Histories &&histories,
+                    std::vector<Ptr<Vocab const>> &vocabs);
+
+  unsigned int numUnits() { return segments_.size(); };
+
+  string_view getUnderlyingSource(int index);
+  std::string getSource(int index);
+  std::string getTranslation(int index);
+  std::vector<int> getAlignment(int index);
+
+private:
+  std::string source_;
+  Segments segments_;
+  SourceAlignments sourceAlignments_;
+  Histories histories_;
+  std::vector<Ptr<Vocab const>> *vocabs_;
+};
+} // namespace bergamot
+} // namespace marian
+
+#endif // SRC_BERGAMOT_TRANSLATION_RESULT_H_
