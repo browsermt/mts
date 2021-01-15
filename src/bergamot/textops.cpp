@@ -94,7 +94,8 @@ void TextProcessor::query_to_segments(const string_view &query,
         segments.push_back(segment);
 
         auto astart = snt_alignment.begin() + offset;
-        SourceAlignment segment_alignment(astart, astart + offset);
+        SourceAlignment segment_alignment(astart,
+                                          astart + max_input_sentence_tokens_);
         sourceAlignments.push_back(segment_alignment);
       }
 
