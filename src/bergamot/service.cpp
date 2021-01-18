@@ -43,8 +43,9 @@ std::future<TranslationResult> Service::translate(string input) {
   auto future = translationResultPromise.get_future();
 
   Ptr<Request> request = New<Request>(
-      requestId_++, vocabs_, std::move(input), std::move(segments),
-      std::move(sourceAlignments), std::move(translationResultPromise));
+      requestId_++, /* lineNumberBegin = */ 0, vocabs_, std::move(input),
+      std::move(segments), std::move(sourceAlignments),
+      std::move(translationResultPromise));
 
   for (int i = 0; i < request->numSegments(); i++) {
     RequestSentence requestSentence(i, request);

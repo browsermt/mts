@@ -6,7 +6,8 @@
 
 namespace marian {
 
-#define PLOG(worker, level, ...) checkedPLog(worker, #level, __VA_ARGS__)
+#define PLOG(worker, level, ...)
+#define _PLOG(worker, level, ...) checkedPLog(worker, #level, __VA_ARGS__)
 
 template <class... Args>
 void checkedPLog(std::string logger, std::string level, Args... args) {

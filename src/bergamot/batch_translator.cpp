@@ -3,7 +3,6 @@
 #include "data/corpus.h"
 #include "data/text_input.h"
 #include "sanelogging.h"
-#include "timer.h"
 #include "translator/beam_search.h"
 #include "utils.h"
 
@@ -46,15 +45,13 @@ void BatchTranslator::initGraph() {
 
 void BatchTranslator::translate(RequestSentences &requestSentences,
                                 Histories &histories) {
-  int id = 0;
   std::vector<data::SentenceTuple> batchVector;
 
   for (auto &sentence : requestSentences) {
-    data::SentenceTuple sentence_tuple(id);
+    data::SentenceTuple sentence_tuple(sentence.lineNumber());
     Segment segment = sentence.getUnderlyingSegment();
     sentence_tuple.push_back(segment);
     batchVector.push_back(sentence_tuple);
-    id++;
   }
 
   size_t batchSize = batchVector.size();

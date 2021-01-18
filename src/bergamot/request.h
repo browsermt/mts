@@ -36,6 +36,7 @@ namespace bergamot {
 class Request {
 private:
   unsigned int Id_;
+  int lineNumberBegin_;
   std::string source_;
   std::atomic<int> counter_;
   std::vector<Ptr<Vocab const>> *vocabs_;
@@ -47,7 +48,8 @@ private:
   std::promise<TranslationResult> response_;
 
 public:
-  Request(unsigned int, std::vector<Ptr<Vocab const>> &, std::string &&,
+  Request(unsigned int Id, int lineNumberBegin,
+          std::vector<Ptr<Vocab const>> &vocabs_, std::string &&source,
           Segments &&segments, SourceAlignments &&sourceAlignments,
           std::promise<TranslationResult> translationResultPromise);
 
@@ -57,6 +59,7 @@ public:
 
   // Obtain number of segments in a request.
   int numSegments() const;
+  int lineNumberBegin() const;
 
   // Obtains segment corresponding to index  to create a batch of segments among
   // several requests.
@@ -83,6 +86,7 @@ public:
 
   // Returns token in Segment corresponding to index.
   int numTokens();
+  int lineNumber();
   Segment getUnderlyingSegment() const;
   void completeSentence(Ptr<History> history);
   friend bool operator<(const RequestSentence &a, const RequestSentence &b);

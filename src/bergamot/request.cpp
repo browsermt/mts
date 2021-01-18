@@ -10,12 +10,12 @@
 namespace marian {
 namespace bergamot {
 
-Request::Request(unsigned int Id, std::vector<Ptr<Vocab const>> &vocabs,
-                 std::string &&source, Segments &&segments,
-                 SourceAlignments &&sourceAlignments,
+Request::Request(unsigned int Id, int lineNumberBegin,
+                 std::vector<Ptr<Vocab const>> &vocabs, std::string &&source,
+                 Segments &&segments, SourceAlignments &&sourceAlignments,
                  std::promise<TranslationResult> translationResultPromise)
-    : Id_(Id), vocabs_(&vocabs), source_(std::move(source)),
-      segments_(std::move(segments)),
+    : Id_(Id), lineNumberBegin_(lineNumberBegin), vocabs_(&vocabs),
+      source_(std::move(source)), segments_(std::move(segments)),
       sourceAlignments_(std::move(sourceAlignments)),
       response_(std::move(translationResultPromise)) {
 
@@ -23,6 +23,7 @@ Request::Request(unsigned int Id, std::vector<Ptr<Vocab const>> &vocabs,
   histories_.resize(segments_.size(), nullptr);
 }
 
+int Request::lineNumberBegin() const { return lineNumberBegin_; }
 int Request::numSegments() const { return segments_.size(); }
 
 int Request::segmentTokens(int index) const {
@@ -62,6 +63,10 @@ RequestSentence::RequestSentence(int index, Ptr<Request> request)
     : index_(index), request_(request) {}
 
 int RequestSentence::numTokens() { return (request_->segmentTokens(index_)); }
+
+int RequestSentence::lineNumber() {
+  return (request_->lineNumberBegin() + index_);
+}
 
 void RequestSentence::completeSentence(Ptr<History> history) {
   // Relays completeSentence into request's processHistory, using index
