@@ -12,8 +12,11 @@
 namespace marian {
 namespace bergamot {
 class TranslationResult {
-  // TranslationResult class handles post-processing of Request, after
-  // histories have been obtained from translations.
+  // Once a request is completed, the constructs to postprocess the same is
+  // moved into a translation result. The API provides a lazy means to obtain
+  // 1. sourceText (raw underlying text)
+  // 2. Translation
+  // 3. Alignments between string_views of tokens in sourceText and Translation.
 
 public:
   TranslationResult(std::string &&source, Segments &&segments,
@@ -22,9 +25,16 @@ public:
 
   unsigned int numUnits() { return segments_.size(); };
 
+  // Provides raw text before being (unicode) normalized.
   string_view getUnderlyingSource(int index);
+
+  // Source as decoded by the vocab (normalized, unlike UnderlyingSource).
   std::string getSource(int index);
+
+  // Translation of the unit at corresponding index.
   std::string getTranslation(int index);
+
+  // Provides a hard alignment between source and target words.
   std::vector<int> getAlignment(int index);
 
 private:
