@@ -24,9 +24,10 @@ Service::Service(Ptr<Options> options)
 }
 
 std::future<TranslationResult> Service::translate(string input) {
-  // Takes in a blob of text. Segments and SourceAlignments are extracted from
-  // the input (blob of text) and used to construct a Request along with a
-  // promise. promise value is set by the worker completing a request.
+  // Takes in a blob of text. Segments and std::vector<TokenRanges> are
+  // extracted from the input (blob of text) and used to construct a Request
+  // along with a promise. promise value is set by the worker completing a
+  // request.
   //
   // Batcher, which currently runs on the main thread constructs batches out of
   // a single request (at the moment) and adds them into a Producer-Consumer
@@ -36,7 +37,7 @@ std::future<TranslationResult> Service::translate(string input) {
   // returns future corresponding to the promise.
 
   Segments segments;
-  SourceAlignments sourceAlignments;
+  std::vector<TokenRanges> sourceAlignments;
   text_processor_.query_to_segments(input, segments, sourceAlignments);
 
   std::promise<TranslationResult> translationResultPromise;

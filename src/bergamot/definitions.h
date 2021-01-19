@@ -10,8 +10,8 @@ namespace bergamot {
 
 typedef marian::Words Segment;
 typedef std::vector<Segment> Segments;
-typedef std::vector<marian::string_view> SourceAlignment;
-typedef std::vector<SourceAlignment> SourceAlignments;
+typedef std::vector<marian::string_view> TokenRanges;
+typedef std::vector<TokenRanges> SentenceTokenRanges;
 
 /** @brief Creates unique_ptr any type, passes all arguments to any available
  *  * constructor */

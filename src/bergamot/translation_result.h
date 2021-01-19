@@ -19,34 +19,60 @@ class TranslationResult {
   // 3. Alignments between string_views of tokens in sourceText and Translation.
 
 public:
-  std::vector<string_view> sourceMappings_;
-  std::vector<string_view> targetMappings_;
+  typedef std::vector<std::pair<string_view, string_view>> SentenceMappings;
 
   TranslationResult(std::string &&source, Segments &&segments,
-                    SourceAlignments &&sourceAlignments, Histories &&histories,
+                    std::vector<TokenRanges> &&sourceRanges,
+                    Histories &&histories,
                     std::vector<Ptr<Vocab const>> &vocabs);
 
   unsigned int numUnits() { return segments_.size(); };
 
-  // Provides raw text before being (unicode) normalized.
-  string_view getSource(int index) const;
-
-  // Source as decoded by the vocab (normalized, unlike UnderlyingSource).
-  std::string getNormalizedSource(int index) const;
-
-  // Translation of the unit at corresponding index.
-  string_view getTranslation(int index) const;
+  const string_view &getSource(unsigned int index) const;
+  const string_view &getTranslation(unsigned int index) const;
+  std::string getNormalizedSource(unsigned int index) const;
+  const History &getHistory(unsigned int index) const;
 
   // Provides a hard alignment between source and target words.
-  std::vector<int> getAlignment(int index);
+  std::vector<int> getAlignment(unsigned int index);
+
+  /* Return the original text. */
+  const std::string &getOriginalText() const { return source_; }
+
+  /* Return the translated text. */
+  const std::string &getTranslatedText() const { return translation_; }
+
+  /* Return the Quality scores of the translated text. */
+  /* Not implemented, commented out.
+  const QualityScore &getQualityScore() const { return qualityScore; }
+  */
+
+  const SentenceMappings &getSentenceMappings() const {
+    return sentenceMappings_;
+  }
 
 private:
   std::string source_;
   std::string translation_;
-  Segments segments_;
-  SourceAlignments sourceAlignments_;
+
+  // Histories are currently required for interoperability with OutputPrinter
+  // and OutputCollector and hence comparisons with marian-decoder.
   Histories histories_;
+
+  // Not needed anymore.
+  Segments segments_;
   std::vector<Ptr<Vocab const>> *vocabs_;
+
+  // string_views at the token level.
+  std::vector<TokenRanges> sourceRanges_;
+
+  // string_views at the sentence-level.
+  std::vector<string_view> sourceMappings_;
+  std::vector<string_view> targetMappings_;
+
+  // Adding the following to complete bergamot-translator spec, redundant with
+  // sourceMappings_ and targetMappings_.
+  SentenceMappings sentenceMappings_;
 };
 } // namespace bergamot
 } // namespace marian

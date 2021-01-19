@@ -42,7 +42,7 @@ private:
   std::vector<Ptr<Vocab const>> *vocabs_;
 
   Segments segments_;
-  SourceAlignments sourceAlignments_;
+  std::vector<TokenRanges> sourceAlignments_;
   std::vector<Ptr<History>> histories_;
 
   std::promise<TranslationResult> response_;
@@ -50,7 +50,7 @@ private:
 public:
   Request(unsigned int Id, int lineNumberBegin,
           std::vector<Ptr<Vocab const>> &vocabs_, std::string &&source,
-          Segments &&segments, SourceAlignments &&sourceAlignments,
+          Segments &&segments, std::vector<TokenRanges> &&sourceAlignments,
           std::promise<TranslationResult> translationResultPromise);
 
   // Obtain the count of tokens in the segment correponding to index. Used to

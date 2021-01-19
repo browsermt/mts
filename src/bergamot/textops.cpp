@@ -54,10 +54,9 @@ Tokenizer::Tokenizer(Ptr<Options> options) : inference_(true), addEOS_(false) {
   vocabs_ = loadVocabularies(options);
 }
 
-Segment Tokenizer::tokenize(string_view const &snt,
-                            SourceAlignment &sourceAlignment) {
+Segment Tokenizer::tokenize(const string_view &snt, TokenRanges &tokenRanges) {
   // TODO(jerin): Bunch of hardcode here, 1, 0, need to get rid off somehow.
-  return vocabs_[0]->encodePreservingSource(snt, sourceAlignment, addEOS_,
+  return vocabs_[0]->encodePreservingSource(snt, tokenRanges, addEOS_,
                                             inference_);
 }
 
@@ -72,14 +71,14 @@ TextProcessor::TextProcessor(Ptr<Options> options)
 
 void TextProcessor::query_to_segments(const string_view &query,
                                       Segments &segments,
-                                      SourceAlignments &sourceAlignments) {
+                                      std::vector<TokenRanges> &sourceRanges) {
   auto buf = sentence_splitter_.createSentenceStream(query);
   pcrecpp::StringPiece snt;
 
   while (buf >> snt) {
     LOG(trace, "SNT: {}", snt);
     string_view snt_string_view(snt.data(), snt.size());
-    SourceAlignment snt_alignment;
+    TokenRanges snt_alignment;
     Segment tokenized_sentence =
         tokenizer_.tokenize(snt_string_view, snt_alignment);
 
@@ -94,9 +93,9 @@ void TextProcessor::query_to_segments(const string_view &query,
         segments.push_back(segment);
 
         auto astart = snt_alignment.begin() + offset;
-        SourceAlignment segment_alignment(astart,
-                                          astart + max_input_sentence_tokens_);
-        sourceAlignments.push_back(segment_alignment);
+        TokenRanges segment_alignment(astart,
+                                      astart + max_input_sentence_tokens_);
+        sourceRanges.push_back(segment_alignment);
       }
 
       if (offset < max_input_sentence_tokens_) {
@@ -106,14 +105,14 @@ void TextProcessor::query_to_segments(const string_view &query,
         segments.push_back(segment);
 
         auto astart = snt_alignment.begin() + offset;
-        SourceAlignment segment_alignment(astart, snt_alignment.end());
-        sourceAlignments.push_back(segment_alignment);
+        TokenRanges segment_alignment(astart, snt_alignment.end());
+        sourceRanges.push_back(segment_alignment);
       }
 
     } else {
       tokenized_sentence.push_back(tokenizer_.sourceEosId());
       segments.push_back(tokenized_sentence);
-      sourceAlignments.push_back(snt_alignment);
+      sourceRanges.push_back(snt_alignment);
     }
   }
 }

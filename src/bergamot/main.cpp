@@ -54,10 +54,10 @@ int main(int argc, char *argv[]) {
   auto translation_result_future = service.translate(input);
   translation_result_future.wait();
   auto translation_result = translation_result_future.get();
-  for (int i = 0; i < translation_result.numUnits(); i++) {
-    std::cout << "[src] " << translation_result.getSource(i) << "\n";
-    std::cout << "[tgt] " << translation_result.getTranslation(i) << "\n";
-    std::cout << "--------------------------------\n";
+  for (auto &p : translation_result.getSentenceMappings()) {
+    // p.first is sourceMapping, p.second is targetMapping
+    std::cout << "[src] " << p.first << "\n";
+    std::cout << "[tgt] " << p.second << "\n";
   }
 
   service.stop();

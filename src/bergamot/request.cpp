@@ -12,7 +12,8 @@ namespace bergamot {
 
 Request::Request(unsigned int Id, int lineNumberBegin,
                  std::vector<Ptr<Vocab const>> &vocabs, std::string &&source,
-                 Segments &&segments, SourceAlignments &&sourceAlignments,
+                 Segments &&segments,
+                 std::vector<TokenRanges> &&sourceAlignments,
                  std::promise<TranslationResult> translationResultPromise)
     : Id_(Id), lineNumberBegin_(lineNumberBegin), vocabs_(&vocabs),
       source_(std::move(source)), segments_(std::move(segments)),

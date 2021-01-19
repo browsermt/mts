@@ -7,19 +7,18 @@ namespace marian {
 namespace bergamot {
 
 TranslationResult::TranslationResult(std::string &&source, Segments &&segments,
-                                     SourceAlignments &&sourceAlignments,
+                                     std::vector<TokenRanges> &&sourceRanges,
                                      Histories &&histories,
                                      std::vector<Ptr<Vocab const>> &vocabs)
-    : source_(std::move(source)),
-      sourceAlignments_(std::move(sourceAlignments)),
+    : source_(std::move(source)), sourceRanges_(std::move(sourceRanges)),
       segments_(std::move(segments)), histories_(std::move(histories)),
       vocabs_(&vocabs) {
 
   // Process sourceMappings into sourceMappings_.
   sourceMappings_.reserve(segments_.size());
   for (int i = 0; i < segments_.size(); i++) {
-    string_view first = sourceAlignments_[i].front();
-    string_view last = sourceAlignments_[i].back();
+    string_view first = sourceRanges_[i].front();
+    string_view last = sourceRanges_[i].back();
     int size = last.end() - first.begin();
     sourceMappings_.emplace_back(first.data(), size);
   }
@@ -28,6 +27,7 @@ TranslationResult::TranslationResult(std::string &&source, Segments &&segments,
   // Current implementation uses += on std::string, multiple resizes.
   // Stores ByterRanges as indices first, followed by conversion into
   // string_views.
+  // TODO(jerin): Add token level string_views here as well.
   std::vector<std::pair<int, int>> translationRanges;
   int offset{0}, end{0};
   bool first{true};
@@ -55,23 +55,34 @@ TranslationResult::TranslationResult(std::string &&source, Segments &&segments,
   for (auto &p : translationRanges) {
     targetMappings_.emplace_back(&translation_[p.first], p.second - p.first);
   }
+
+  // Surely, let's add sentenceMappings_
+  for (auto p = sourceMappings_.begin(), q = targetMappings_.begin();
+       p != sourceMappings_.end() && q != targetMappings_.end(); ++p, ++q) {
+
+    sentenceMappings_.emplace_back(*p, *q);
+  }
 }
 
-string_view TranslationResult::getSource(int index) const {
+const string_view &TranslationResult::getSource(unsigned int index) const {
   return sourceMappings_[index];
 }
 
-std::string TranslationResult::getNormalizedSource(int index) const {
+std::string TranslationResult::getNormalizedSource(unsigned int index) const {
   Words words = segments_[index];
   std::string decoded = vocabs_->front()->decode(words);
   return decoded;
 }
 
-string_view TranslationResult::getTranslation(int index) const {
+const string_view &TranslationResult::getTranslation(unsigned int index) const {
   return targetMappings_[index];
 }
 
-std::vector<int> TranslationResult::getAlignment(int index) {
+const History &TranslationResult::getHistory(unsigned int index) const {
+  return *histories_[index].get();
+}
+
+std::vector<int> TranslationResult::getAlignment(unsigned int index) {
   Ptr<History> history = histories_[index];
   NBestList onebest = history->nBest(1);
   Result &result = onebest[0]; // Expecting only one result;

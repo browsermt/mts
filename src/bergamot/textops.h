@@ -37,7 +37,7 @@ private:
 
 public:
   explicit Tokenizer(Ptr<Options>);
-  Segment tokenize(string_view const &, SourceAlignment &);
+  Segment tokenize(const string_view &input, TokenRanges &tokenRanges);
   Word sourceEosId() { return vocabs_.front()->getEosId(); };
 };
 
@@ -49,8 +49,8 @@ private:
 
 public:
   explicit TextProcessor(Ptr<Options>);
-  void query_to_segments(const string_view &query, Segments &,
-                         SourceAlignments &);
+  void query_to_segments(const string_view &query, Segments &segments,
+                         std::vector<TokenRanges> &sourceRanges);
 };
 
 } // namespace bergamot
