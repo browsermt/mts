@@ -6,8 +6,8 @@
 #include "common/timer.h"
 #include "common/utils.h"
 #include "marian.h"
-#include "translator/beam_search.h"
 #include "translator/history.h"
+#include "translator/output_collector.h"
 #include "translator/output_printer.h"
 
 #include "service.h"
@@ -34,30 +34,47 @@ int main(int argc, char *argv[]) {
   cp.addOption<int>("--nbest", "Bergamot Options",
                     "NBest value used for decoding", 1);
 
+  cp.addOption<bool>("--marian-decoder-alpha", "Bergamot Options",
+                     "Run marian-decoder output printer code", false);
+
   // TODO(jerin): Add QE later.
   // marian::qe::QualityEstimator::addOptions(cp);
 
   auto options = cp.parseOptions(argc, argv, true);
-
-  // Scan a paragraph, queue it.
-  // std::string input;
-  // std::getline(std::cin, input);
-  // std::cout << input << "\n";
+  marian::bergamot::Service service(options);
 
   std::ostringstream std_input;
   std_input << std::cin.rdbuf();
   std::string input = std_input.str();
 
-  // marian::string_view input_view(input);
-
-  marian::bergamot::Service service(options);
   auto translation_result_future = service.translate(input);
   translation_result_future.wait();
   auto translation_result = translation_result_future.get();
-  for (auto &p : translation_result.getSentenceMappings()) {
-    // p.first is sourceMapping, p.second is targetMapping
-    std::cout << "[src] " << p.first << "\n";
-    std::cout << "[tgt] " << p.second << "\n";
+  if (options->get<bool>("marian-decoder-alpha")) {
+    bool doNbest = options->get<bool>("n-best");
+
+    auto collector = marian::New<marian::OutputCollector>(
+        options->get<std::string>("output"));
+
+    // There is a dependency of vocabs here.
+    auto printer =
+        marian::New<marian::OutputPrinter>(options, service.targetVocab());
+    if (options->get<bool>("quiet-translation"))
+      collector->setPrintingStrategy(marian::New<marian::QuietPrinting>());
+
+    for (auto &history : translation_result.getHistories()) {
+      std::stringstream best1;
+      std::stringstream bestn;
+      printer->print(history, best1, bestn);
+      collector->Write((long)history->getLineNum(), best1.str(), bestn.str(),
+                       doNbest);
+    }
+
+  } else {
+    for (auto &p : translation_result.getSentenceMappings()) {
+      std::cout << "[src] " << p.first << "\n";
+      std::cout << "[tgt] " << p.second << "\n";
+    }
   }
 
   service.stop();

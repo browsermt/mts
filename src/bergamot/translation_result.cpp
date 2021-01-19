@@ -64,6 +64,7 @@ TranslationResult::TranslationResult(std::string &&source, Segments &&segments,
   }
 }
 
+/*
 const string_view &TranslationResult::getSource(unsigned int index) const {
   return sourceMappings_[index];
 }
@@ -77,10 +78,9 @@ std::string TranslationResult::getNormalizedSource(unsigned int index) const {
 const string_view &TranslationResult::getTranslation(unsigned int index) const {
   return targetMappings_[index];
 }
+*/
 
-const History &TranslationResult::getHistory(unsigned int index) const {
-  return *histories_[index].get();
-}
+const Histories &TranslationResult::getHistories() const { return histories_; }
 
 std::vector<int> TranslationResult::getAlignment(unsigned int index) {
   Ptr<History> history = histories_[index];

@@ -12,40 +12,32 @@
 namespace marian {
 namespace bergamot {
 class TranslationResult {
-  // Once a request is completed, the constructs to postprocess the same is
-  // moved into a translation result. The API provides a lazy means to obtain
-  // 1. sourceText (raw underlying text)
-  // 2. Translation
-  // 3. Alignments between string_views of tokens in sourceText and Translation.
-
 public:
-  typedef std::vector<std::pair<string_view, string_view>> SentenceMappings;
-
   TranslationResult(std::string &&source, Segments &&segments,
                     std::vector<TokenRanges> &&sourceRanges,
                     Histories &&histories,
                     std::vector<Ptr<Vocab const>> &vocabs);
 
+  /*
   unsigned int numUnits() { return segments_.size(); };
-
   const string_view &getSource(unsigned int index) const;
   const string_view &getTranslation(unsigned int index) const;
   std::string getNormalizedSource(unsigned int index) const;
   const History &getHistory(unsigned int index) const;
+  */
+  const Histories &getHistories() const;
 
   // Provides a hard alignment between source and target words.
   std::vector<int> getAlignment(unsigned int index);
 
-  /* Return the original text. */
   const std::string &getOriginalText() const { return source_; }
-
-  /* Return the translated text. */
   const std::string &getTranslatedText() const { return translation_; }
 
-  /* Return the Quality scores of the translated text. */
-  /* Not implemented, commented out.
-  const QualityScore &getQualityScore() const { return qualityScore; }
-  */
+  // Return the Quality scores of the translated text.
+  // Not implemented currently, commenting out.
+  // const QualityScore &getQualityScore() const { return qualityScore; }
+
+  typedef std::vector<std::pair<string_view, string_view>> SentenceMappings;
 
   const SentenceMappings &getSentenceMappings() const {
     return sentenceMappings_;
@@ -59,7 +51,7 @@ private:
   // and OutputCollector and hence comparisons with marian-decoder.
   Histories histories_;
 
-  // Not needed anymore.
+  // Can be removed eventually.
   Segments segments_;
   std::vector<Ptr<Vocab const>> *vocabs_;
 
