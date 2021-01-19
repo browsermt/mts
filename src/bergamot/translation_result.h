@@ -19,6 +19,9 @@ class TranslationResult {
   // 3. Alignments between string_views of tokens in sourceText and Translation.
 
 public:
+  std::vector<string_view> sourceMappings_;
+  std::vector<string_view> targetMappings_;
+
   TranslationResult(std::string &&source, Segments &&segments,
                     SourceAlignments &&sourceAlignments, Histories &&histories,
                     std::vector<Ptr<Vocab const>> &vocabs);
@@ -26,19 +29,20 @@ public:
   unsigned int numUnits() { return segments_.size(); };
 
   // Provides raw text before being (unicode) normalized.
-  string_view getUnderlyingSource(int index);
+  string_view getSource(int index) const;
 
   // Source as decoded by the vocab (normalized, unlike UnderlyingSource).
-  std::string getSource(int index);
+  std::string getNormalizedSource(int index) const;
 
   // Translation of the unit at corresponding index.
-  std::string getTranslation(int index);
+  string_view getTranslation(int index) const;
 
   // Provides a hard alignment between source and target words.
   std::vector<int> getAlignment(int index);
 
 private:
   std::string source_;
+  std::string translation_;
   Segments segments_;
   SourceAlignments sourceAlignments_;
   Histories histories_;

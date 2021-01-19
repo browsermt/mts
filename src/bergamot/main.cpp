@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
   translation_result_future.wait();
   auto translation_result = translation_result_future.get();
   for (int i = 0; i < translation_result.numUnits(); i++) {
-    std::cout << "[src] " << translation_result.getUnderlyingSource(i) << "\n";
+    std::cout << "[src] " << translation_result.getSource(i) << "\n";
     std::cout << "[tgt] " << translation_result.getTranslation(i) << "\n";
     std::cout << "--------------------------------\n";
   }
