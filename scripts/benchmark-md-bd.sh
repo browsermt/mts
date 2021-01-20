@@ -10,7 +10,6 @@ COMMON_ARGS=(
     --vocabs $MTS_DIR/assets/students/ende/vocab.deen.spm $MTS_DIR/assets/students/ende/vocab.deen.spm 
     --beam-size 1 --skip-cost --shortlist $MTS_DIR/assets/students/ende/lex.s2t.gz 50 50 
     --quiet --quiet-translation --int8shiftAlphaAll -w 128 
-    -i $INPUT_FILE
 )
 
 
