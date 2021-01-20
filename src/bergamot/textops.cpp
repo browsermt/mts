@@ -1,4 +1,5 @@
 #include "textops.h"
+#include "common/timer.h"
 #include "utils.h"
 #include <pcrecpp.h>
 #include <string>
@@ -73,46 +74,59 @@ void TextProcessor::query_to_segments(const string_view &query,
                                       Segments &segments,
                                       std::vector<TokenRanges> &sourceRanges) {
   auto buf = sentence_splitter_.createSentenceStream(query);
-  pcrecpp::StringPiece snt;
+  // pcrecpp::StringPiece snt;
+  string_view snt;
+
+  int sentencesProcessed{0};
 
   while (buf >> snt) {
-    LOG(trace, "SNT: {}", snt);
+    // LOG(info, "SNT: {}", snt);
     string_view snt_string_view(snt.data(), snt.size());
     TokenRanges snt_alignment;
+    timer::Timer spiece_timer;
     Segment tokenized_sentence =
         tokenizer_.tokenize(snt_string_view, snt_alignment);
 
-    if (tokenized_sentence.size() > max_input_sentence_tokens_) {
-      int offset;
-      for (offset = 0;
-           offset + max_input_sentence_tokens_ < tokenized_sentence.size();
-           offset += max_input_sentence_tokens_) {
-        auto start = tokenized_sentence.begin() + offset;
-        Segment segment(start, start + max_input_sentence_tokens_);
-        segment.push_back(tokenizer_.sourceEosId());
-        segments.push_back(segment);
+    // LOG(info, "Tokenization took {:.5f} seconds", spiece_timer.elapsed());
+    if (tokenized_sentence.size() > 0) {
+      if (tokenized_sentence.size() > max_input_sentence_tokens_) {
+        int offset;
+        for (offset = 0;
+             offset + max_input_sentence_tokens_ < tokenized_sentence.size();
+             offset += max_input_sentence_tokens_) {
+          auto start = tokenized_sentence.begin() + offset;
+          Segment segment(start, start + max_input_sentence_tokens_);
+          segment.push_back(tokenizer_.sourceEosId());
+          segments.push_back(segment);
 
-        auto astart = snt_alignment.begin() + offset;
-        TokenRanges segment_alignment(astart,
-                                      astart + max_input_sentence_tokens_);
-        sourceRanges.push_back(segment_alignment);
+          auto astart = snt_alignment.begin() + offset;
+          TokenRanges segment_alignment(astart,
+                                        astart + max_input_sentence_tokens_);
+          sourceRanges.push_back(segment_alignment);
+        }
+
+        if (offset < max_input_sentence_tokens_) {
+          auto start = tokenized_sentence.begin() + offset;
+          Segment segment(start, tokenized_sentence.end());
+          segment.push_back(tokenizer_.sourceEosId());
+          segments.push_back(segment);
+
+          auto astart = snt_alignment.begin() + offset;
+          TokenRanges segment_alignment(astart, snt_alignment.end());
+          sourceRanges.push_back(segment_alignment);
+        }
+
+      } else {
+        timer::Timer push_timer;
+        tokenized_sentence.push_back(tokenizer_.sourceEosId());
+        segments.push_back(tokenized_sentence);
+        sourceRanges.push_back(snt_alignment);
+        // LOG(info, "Push took {:.5f} seconds", push_timer.elapsed());
       }
-
-      if (offset < max_input_sentence_tokens_) {
-        auto start = tokenized_sentence.begin() + offset;
-        Segment segment(start, tokenized_sentence.end());
-        segment.push_back(tokenizer_.sourceEosId());
-        segments.push_back(segment);
-
-        auto astart = snt_alignment.begin() + offset;
-        TokenRanges segment_alignment(astart, snt_alignment.end());
-        sourceRanges.push_back(segment_alignment);
-      }
-
-    } else {
-      tokenized_sentence.push_back(tokenizer_.sourceEosId());
-      segments.push_back(tokenized_sentence);
-      sourceRanges.push_back(snt_alignment);
+    }
+    ++sentencesProcessed;
+    if (sentencesProcessed % 10000 == 0) {
+      LOG(info, "Processed {}", sentencesProcessed);
     }
   }
 }

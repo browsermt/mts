@@ -1,4 +1,5 @@
 #include "translation_result.h"
+#include "common/logging.h"
 #include "data/alignment.h"
 
 #include <utility>
@@ -15,6 +16,7 @@ TranslationResult::TranslationResult(std::string &&source, Segments &&segments,
       vocabs_(&vocabs) {
 
   // Process sourceMappings into sourceMappings_.
+  LOG(info, "Creating sourcemappings");
   sourceMappings_.reserve(segments_.size());
   for (int i = 0; i < segments_.size(); i++) {
     string_view first = sourceRanges_[i].front();
@@ -28,6 +30,7 @@ TranslationResult::TranslationResult(std::string &&source, Segments &&segments,
   // Stores ByterRanges as indices first, followed by conversion into
   // string_views.
   // TODO(jerin): Add token level string_views here as well.
+  LOG(info, "Decoding");
   std::vector<std::pair<int, int>> translationRanges;
   int offset{0}, end{0};
   bool first{true};
@@ -51,12 +54,14 @@ TranslationResult::TranslationResult(std::string &&source, Segments &&segments,
   }
 
   // Converting ByteRanges as indices into string_views.
+  LOG(info, "generating targetMappings");
   targetMappings_.reserve(translationRanges.size());
   for (auto &p : translationRanges) {
     targetMappings_.emplace_back(&translation_[p.first], p.second - p.first);
   }
 
   // Surely, let's add sentenceMappings_
+  LOG(info, "generating SentenceMappings");
   for (auto p = sourceMappings_.begin(), q = targetMappings_.begin();
        p != sourceMappings_.end() && q != targetMappings_.end(); ++p, ++q) {
 

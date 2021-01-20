@@ -18,7 +18,8 @@ namespace bergamot {
 class Service {
 public:
   explicit Service(Ptr<Options> options);
-  std::future<TranslationResult> translate(std::string input);
+  std::future<TranslationResult> translateWithCopy(std::string input);
+  std::future<TranslationResult> translate(std::string &&input);
   void stop();
   Ptr<Vocab const> sourceVocab() const { return vocabs_.front(); };
   Ptr<Vocab const> targetVocab() const { return vocabs_.back(); };

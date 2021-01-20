@@ -23,7 +23,11 @@ Service::Service(Ptr<Options> options)
   }
 }
 
-std::future<TranslationResult> Service::translate(string input) {
+std::future<TranslationResult> Service::translateWithCopy(std::string input) {
+  return translate(std::move(input));
+}
+
+std::future<TranslationResult> Service::translate(std::string &&input) {
   // Takes in a blob of text. Segments and std::vector<TokenRanges> are
   // extracted from the input (blob of text) and used to construct a Request
   // along with a promise. promise value is set by the worker completing a
@@ -62,6 +66,10 @@ std::future<TranslationResult> Service::translate(string input) {
     if (numSentences > 0) {
       PCItem pcitem(batchNumber_++, std::move(batchSentences));
       pcqueue_.ProduceSwap(pcitem);
+    }
+
+    if (batchNumber_ % 500 == 0) {
+      LOG(info, "Queuing batch {}", batchNumber_);
     }
   } while (numSentences > 0);
 

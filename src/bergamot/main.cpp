@@ -12,6 +12,29 @@
 
 #include "service.h"
 
+void marian_decoder_minimal(const marian::Histories &histories,
+                            marian::Ptr<marian::Vocab const> targetVocab,
+                            marian::Ptr<marian::Options> options) {
+
+  bool doNbest = options->get<bool>("n-best");
+
+  auto collector =
+      marian::New<marian::OutputCollector>(options->get<std::string>("output"));
+
+  // There is a dependency of vocabs here.
+  auto printer = marian::New<marian::OutputPrinter>(options, targetVocab);
+  if (options->get<bool>("quiet-translation"))
+    collector->setPrintingStrategy(marian::New<marian::QuietPrinting>());
+
+  for (auto &history : histories) {
+    std::stringstream best1;
+    std::stringstream bestn;
+    printer->print(history, best1, bestn);
+    collector->Write((long)history->getLineNum(), best1.str(), bestn.str(),
+                     doNbest);
+  }
+}
+
 int main(int argc, char *argv[]) {
   marian::ConfigParser cp(marian::cli::mode::translation);
 
@@ -40,6 +63,8 @@ int main(int argc, char *argv[]) {
   // TODO(jerin): Add QE later.
   // marian::qe::QualityEstimator::addOptions(cp);
 
+  marian::timer::Timer decoderTimer;
+
   auto options = cp.parseOptions(argc, argv, true);
   marian::bergamot::Service service(options);
 
@@ -47,29 +72,14 @@ int main(int argc, char *argv[]) {
   std_input << std::cin.rdbuf();
   std::string input = std_input.str();
 
-  auto translation_result_future = service.translate(input);
+  LOG(info, "IO complete Translating input");
+  auto translation_result_future = service.translate(std::move(input));
   translation_result_future.wait();
   auto translation_result = translation_result_future.get();
   if (options->get<bool>("marian-decoder-alpha")) {
-    bool doNbest = options->get<bool>("n-best");
-
-    auto collector = marian::New<marian::OutputCollector>(
-        options->get<std::string>("output"));
-
-    // There is a dependency of vocabs here.
-    auto printer =
-        marian::New<marian::OutputPrinter>(options, service.targetVocab());
-    if (options->get<bool>("quiet-translation"))
-      collector->setPrintingStrategy(marian::New<marian::QuietPrinting>());
-
-    for (auto &history : translation_result.getHistories()) {
-      std::stringstream best1;
-      std::stringstream bestn;
-      printer->print(history, best1, bestn);
-      collector->Write((long)history->getLineNum(), best1.str(), bestn.str(),
-                       doNbest);
-    }
-
+    marian_decoder_minimal(translation_result.getHistories(),
+                           service.targetVocab(), options);
+    LOG(info, "Total time: {:.5f}s wall", decoderTimer.elapsed());
   } else {
     for (auto &p : translation_result.getSentenceMappings()) {
       std::cout << "[src] " << p.first << "\n";

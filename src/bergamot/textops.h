@@ -11,11 +11,44 @@
 #include "definitions.h"
 #include "ssplit/ssplit.h"
 
+#include <cassert>
+#include <iostream>
 #include <string>
 #include <vector>
 
 namespace marian {
 namespace bergamot {
+
+class StringViewStream {
+private:
+  string_view text_;
+  string_view::iterator current_;
+
+public:
+  StringViewStream(const string_view &text) : text_(text) {
+    current_ = text_.begin();
+  }
+
+  bool operator>>(string_view &sentence_view) {
+    // Skip to the next non-newline; whitespaces, anything else are okay.
+    while (current_ != text_.end() &&
+           (*current_ == '\n' || *current_ == ' ' || *current_ == '\t')) {
+      ++current_;
+    }
+
+    string_view::iterator p = current_;
+    while (p != text_.end() && *p != '\n') {
+      ++p;
+    }
+
+    if (p == current_)
+      return false;
+
+    sentence_view = string_view(current_, p - current_);
+    current_ = p;
+    return true;
+  };
+};
 
 class SentenceSplitter {
 public:
@@ -27,6 +60,16 @@ private:
   Ptr<Options> options_;
   ug::ssplit::SentenceStream::splitmode mode_;
   ug::ssplit::SentenceStream::splitmode string2splitmode(const std::string &m);
+};
+
+class LineSplitter {
+public:
+  explicit LineSplitter(Ptr<Options> options){
+      // Do nothing.
+  };
+  StringViewStream createSentenceStream(string_view const &input) {
+    return std::move(StringViewStream(input));
+  }
 };
 
 class Tokenizer {
@@ -44,7 +87,7 @@ public:
 class TextProcessor {
 private:
   Tokenizer tokenizer_;
-  SentenceSplitter sentence_splitter_;
+  LineSplitter sentence_splitter_;
   unsigned int max_input_sentence_tokens_;
 
 public:
